@@ -95,6 +95,7 @@ while i<=2:
 
 
     actions.move_to_element(scroll_elements).perform()
+
     time.sleep(1)
     # actions.click().perform()
     scroll_elements.click()
