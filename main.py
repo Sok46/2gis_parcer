@@ -1,14 +1,17 @@
 import time
-import requests
+
 import pandas as pd
-from bs4 import BeautifulSoup
+
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 
-url = (f'https://2gis.ru/ramenskoe/search/%D0%B1%D0%B8%D0%B1%D0%BB%D0%B8%D0%BE%D1%82%D0%B5%D0%BA%D0%B8%20%D1%80%D0%B0%D0%BC%D0%B5%D0%BD%D1%81%D0%BA%D0%BE%D0%B5?m=38.218276%2C55.572913%2F13.08')
-file_name = 'раменское библиотеки'
+url = input('вставьте ссылку на карту: ')
+count_pages = int(input('введите количество страниц для парсинга: '))
 
+# count_pages = 7
+# url = (f'https://2gis.ru/moscow/search/%D0%B1%D0%B8%D1%80%D1%8E%D0%BB%D0%B5%D0%B2%D0%BE%20%D0%B2%D0%BE%D1%81%D1%82%D0%BE%D1%87%D0%BD%D0%BE%D0%B5%20%D0%BE%D0%BF%D1%82%D0%B8%D0%BA%D0%B0?m=37.685554%2C55.600748%2F13.33%2Fp%2F20.37%2Fr%2F-7.54')
+# file_name = 'спорт-площадки бирюлёво восточное'
 
 points = []
 ulitsa = []
@@ -29,9 +32,11 @@ time.sleep(9)
 scroll_elements = driver.find_element(By.CSS_SELECTOR, '#root > div > div > div._1sf34doj > div._1u4plm2 > div:nth-child(2) > div:nth-child(1) > div > div:nth-child(2) > div > div > div > div._1tdquig > div._z72pvu > div._3zzdxk > div > div > div > div._1x4k6z7 > div._5ocwns > div:nth-child(2) > svg > path')
 scr_el = driver.find_element(By.CLASS_NAME,'_1rkbbi0x')
 # scroll_element = scroll_elements[]
+file_name = 'частные поликлиники Бирюлево'
+print(file_name)
 
-while i<=2:
-    time.sleep(3)
+while i <= count_pages:
+    time.sleep(5)
     names = driver.find_elements(By.CLASS_NAME,'_zjunba' )
     items = driver.find_elements(By.CLASS_NAME,'_1kf6gff' )
 
@@ -57,11 +62,11 @@ while i<=2:
             try:
                 street = driver.find_element(By.CSS_SELECTOR,'#root > div > div > div._1sf34doj > div._1u4plm2 > div:nth-child(2) > div:nth-child(2) > div > div > div > div > div._jcreqo > div._fjltwx > div > div._3zzdxk > div > div > div > div > div._1b96w9b > div:nth-child(2) > div._t0tx82 > div._8sgdp4 > div > div:nth-child(1) > div._49kxlr > div > div:nth-child(2) > div:nth-child(1)').text
             except:
-                street = "error"
+                street = "-"
             try:
                 descr = driver.find_element(By.CLASS_NAME,'_1p8iqzw').text
             except:
-                descr = "error"
+                descr = "-"
 
             try:
                 stars = driver.find_element(By.CSS_SELECTOR,'#root > div > div > div._1sf34doj > div._1u4plm2 > div:nth-child(2) > div:nth-child(2) > div > div > div > div > div._jcreqo > div._fjltwx > div > div._3zzdxk > div > div > div > div > div._1tfwnxl > div._146hbp5 > div > div._y10azs').text
@@ -97,17 +102,23 @@ while i<=2:
     actions.move_to_element(scroll_elements).perform()
 
     time.sleep(1)
-    # actions.click().perform()
-    scroll_elements.click()
-    print('page= ',i)
 
+    # actions.click().perform()
+    if i < count_pages:
+        scroll_elements.click()
+
+        print('page= ',i)
+    else:
+        pass
     i += 1
+
+
 
     df = pd.DataFrame({'name': points,'type' : type_arr, 'descr' : geos, 'ulitsa': ulitsa, 'stars': arr_stars, 'count_voices': arr_voices, 'lat' : arr_lat, 'long': arr_long})
     df.to_csv(fr'C:\Users\sergey.biryukov\Desktop\Москва генплан конкурс\Общепит/{file_name}.csv', sep=';', encoding='utf8', index=False)
 
     # читаем данные из строки DataFrame
-    data = pd.read_csv(rf'C:\Users\sergey.biryukov\Desktop\Москва генплан конкурс\Общепит/{file_name}.csv', sep=' ; ')
+    data = pd.read_csv(rf'C:\Users\sergey.biryukov\Desktop\Москва генплан конкурс\Общепит/{file_name}.csv', sep=';')
     print(data)
 
 
