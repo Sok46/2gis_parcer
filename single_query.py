@@ -2,7 +2,7 @@ import sys
 import os
 from PyQt6.QtWidgets import (QApplication, QWidget, QLabel, QPushButton, QLineEdit, QButtonGroup, QVBoxLayout,
                              QCheckBox, QFileDialog)
-from PyQt6.QtGui import QFont, QPixmap
+from PyQt6.QtGui import QFont, QPixmap, QAction, QIcon
 from PyQt6.QtCore import Qt
 from selenium.webdriver.chrome.options import Options
 import datetime
@@ -26,7 +26,7 @@ class MainWindow(QWidget):
     def initializeUI(self):
         """Set up the application's GUI."""
         # self.setMaximumSize(310, 130)
-        self.setWindowTitle("QPushButton Example")
+        self.setWindowTitle("2GIS parcer")
         self.setUpMainWindow()
         self.show()
 
@@ -40,8 +40,10 @@ class MainWindow(QWidget):
         chrome_options.add_experimental_option("detach", True)
         self.driver = webdriver.Chrome(options=chrome_options)
         # url = input('вставьте ссылку на карту: ')
-        url = self.link_url.text()
+        # url = self.link_url.text()
+        url = 'https://2gis.ru/moscow'
         self.link_url.setReadOnly(True)
+
         self.driver.get(url)
         self.parce_button.setEnabled(True)
         self.browser_button.setEnabled(False)
@@ -112,14 +114,14 @@ class MainWindow(QWidget):
 
         df = pd.DataFrame({'name': points, 'type': type_arr, 'descr': geos, 'ulitsa': ulitsa, 'stars': arr_stars,
                            'count_voices': arr_voices, 'lat': arr_lat, 'long': arr_long})
-        # path = fr'C:\Users\sergey.biryukov\Desktop\Москва генплан конкурс\Общепит/blya.csv'
-        if os.path.isfile(self.path):  # ставить или не ставить headers
+
+        if os.path.isfile(self.link_url.text()):  # ставить или не ставить headers
             head = False
         else:
             head = True
-        df.to_csv(self.path, sep=';',
+        df.to_csv(self.link_url.text(), sep=';',
                   encoding='utf8', index=False, mode='a', header=head)
-        print(111)
+
 
     def enabledUrlButt(self):
         # self.browser_button.setEnabled(True)
@@ -133,13 +135,14 @@ class MainWindow(QWidget):
 
     def save_file(self):
         f_dialog = QFileDialog().getSaveFileName(self, "Save File", "парсинг 2гис", "csv Files (*.csv)")
-        self.path = f_dialog[0]
+        path = f_dialog[0]
+        self.link_url.setText(path)
 
     def setUpMainWindow(self):
         self.len_url = 0
         self.filename = datetime.datetime.now()
         """Создайте и расположите виджеты в главном окне."""
-        header_label = QLabel("2GIS_Parcer by Sergey_Biryukov")
+        header_label = QLabel("2GIS_Parcer_by_Sergey_Biryukov")
         header_label.setFont(QFont("Arial", 18))
         header_label.setAlignment(
             Qt.AlignmentFlag.AlignCenter)
@@ -160,21 +163,24 @@ class MainWindow(QWidget):
         self.main_v_box.addWidget(question_label)
 
 
-        self.save_button = QPushButton("Установить путь выходного файла...")
-        button_group.addButton(self.save_button)
-        self.save_button.clicked.connect(self.save_file)
-        self.main_v_box.addWidget(self.save_button)
+        # self.save_button = QPushButton("Установить путь выходного файла...")
+        # button_group.addButton(self.save_button)
+        #
+        # self.main_v_box.addWidget(self.save_button)
 
         self.link_url = QLineEdit()
 
         # self.link_url.setAlignment(Qt.AlignmentFlag.AlignRight)
         self.link_url.setClearButtonEnabled(True)
-        self.link_url.setPlaceholderText('Вставьте ссылку на 2ГИС с элементами для парсинга')
+        # self.link_url.addAction(QIcon('icons/folder_icon.png'), QLineEdit.ActionPosition.LeadingPosition)
+        seach_action = self.link_url.addAction(QIcon('icons/folder_icon.png'),QLineEdit.ActionPosition.LeadingPosition)
+
+        self.link_url.setPlaceholderText('Укажите путь для выходного csv ...')
         self.main_v_box.addWidget(self.link_url)
 
         self.browser_button = QPushButton("Открыть браузер")
         button_group.addButton(self.browser_button)
-        self.browser_button.setEnabled(False)
+        self.browser_button.setEnabled(True)
         self.main_v_box.addWidget(self.browser_button)
 
 
@@ -186,6 +192,8 @@ class MainWindow(QWidget):
         self.main_v_box.addWidget(self.confirm_button)
         self.setLayout(self.main_v_box)
 
+        seach_action.triggered.connect(self.save_file)
+        # self.save_button.clicked.connect(self.save_file)
         self.browser_button.clicked.connect(self.openBrowser)
         self.link_url.textChanged.connect(self.enabledUrlButt)
         self.parce_button.clicked.connect(self.parceElement)
