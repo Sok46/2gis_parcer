@@ -231,6 +231,7 @@ class WindowMultyQuery(QWidget):
         self.parce_button.clicked.connect(self.multiParce)
         # self.second_button.clicked.connect(self.show_window_2)
 
+
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     window = WindowMultyQuery()
