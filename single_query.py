@@ -14,6 +14,8 @@ import pandas as pd
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from multy_query import WindowMultyQuery
+
 import threading
 
 
@@ -30,6 +32,11 @@ class MainWindow(QWidget):
         self.setUpMainWindow()
         self.show()
 
+    def show_window_2(self):
+        self.close()
+        self.w = WindowMultyQuery()
+        self.w.show()
+
     def checkboxClicked(self, button):
         """Проверяет, был ли нажат QCheckBox в группе кнопок."""
         print(button.text())
@@ -39,8 +46,6 @@ class MainWindow(QWidget):
         chrome_options = Options()
         chrome_options.add_experimental_option("detach", True)
         self.driver = webdriver.Chrome(options=chrome_options)
-        # url = input('вставьте ссылку на карту: ')
-        # url = self.link_url.text()
         url = 'https://2gis.ru/moscow'
         self.link_url.setReadOnly(True)
 
@@ -163,13 +168,8 @@ class MainWindow(QWidget):
         self.main_v_box.addWidget(question_label)
 
 
-        # self.save_button = QPushButton("Установить путь выходного файла...")
-        # button_group.addButton(self.save_button)
-        #
-        # self.main_v_box.addWidget(self.save_button)
 
         self.link_url = QLineEdit()
-
         # self.link_url.setAlignment(Qt.AlignmentFlag.AlignRight)
         self.link_url.setClearButtonEnabled(True)
         # self.link_url.addAction(QIcon('icons/folder_icon.png'), QLineEdit.ActionPosition.LeadingPosition)
@@ -189,6 +189,11 @@ class MainWindow(QWidget):
         self.parce_button.setEnabled(False)
         self.main_v_box.addWidget(self.parce_button)
 
+        self.second_button = QPushButton('Многостраничная выгрузка')
+        button_group.addButton(self.second_button)
+        self.main_v_box.addWidget(self.second_button)
+
+
         self.main_v_box.addWidget(self.confirm_button)
         self.setLayout(self.main_v_box)
 
@@ -197,6 +202,7 @@ class MainWindow(QWidget):
         self.browser_button.clicked.connect(self.openBrowser)
         self.link_url.textChanged.connect(self.enabledUrlButt)
         self.parce_button.clicked.connect(self.parceElement)
+        self.second_button.clicked.connect(self.show_window_2)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
