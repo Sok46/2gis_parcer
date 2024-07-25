@@ -1,7 +1,7 @@
 import sys
 import os
 from PyQt6.QtWidgets import (QApplication, QWidget, QLabel, QPushButton, QLineEdit, QButtonGroup, QVBoxLayout,
-                             QCheckBox, QFileDialog)
+                             QCheckBox, QFileDialog,QHBoxLayout)
 from PyQt6.QtGui import QFont, QPixmap, QAction, QIcon
 from PyQt6.QtCore import Qt
 from selenium.webdriver.chrome.options import Options
@@ -16,10 +16,11 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from multy_query import WindowMultyQuery
 
+
 import threading
 
 
-class MainWindow(QWidget):
+class WindowSingleQuery(QWidget):
     def __init__(self):
         super().__init__()
 
@@ -28,11 +29,12 @@ class MainWindow(QWidget):
     def initializeUI(self):
         """Set up the application's GUI."""
         # self.setMaximumSize(310, 130)
-        self.setWindowTitle("2GIS parcer")
+        self.setWindowTitle("2GIS parcer_by_Sergey_Biryukov")
         self.setUpMainWindow()
         self.show()
 
     def show_window_2(self):
+
         self.close()
         self.w = WindowMultyQuery()
         self.w.show()
@@ -143,11 +145,18 @@ class MainWindow(QWidget):
         path = f_dialog[0]
         self.link_url.setText(path)
 
+    def open_main(self):
+        from main_window import MainWindow
+        self.hide()
+        self.w = MainWindow()
+        self.w.show()
+
+
     def setUpMainWindow(self):
         self.len_url = 0
         self.filename = datetime.datetime.now()
         """Создайте и расположите виджеты в главном окне."""
-        header_label = QLabel("2GIS_Parcer_by_Sergey_Biryukov")
+        header_label = QLabel("2GIS_Parcer")
         header_label.setFont(QFont("Arial", 18))
         header_label.setAlignment(
             Qt.AlignmentFlag.AlignCenter)
@@ -163,9 +172,18 @@ class MainWindow(QWidget):
         self.confirm_button.clicked.connect(self.stopDriver)
         self.confirm_button.clicked.connect(self.close)
 
+
+        self.back_button = QPushButton("Назад")
+        self.back_button.setEnabled(True)
+        # self.confirm_button.clicked.connect(self.stopDriver)
+        # self.confirm_button.clicked.connect(self.close)
+
         self.main_v_box = QVBoxLayout()
         self.main_v_box.addWidget(header_label)
         self.main_v_box.addWidget(question_label)
+
+        self.ending_h_box = QHBoxLayout()
+
 
 
 
@@ -189,16 +207,22 @@ class MainWindow(QWidget):
         self.parce_button.setEnabled(False)
         self.main_v_box.addWidget(self.parce_button)
 
+
+
         self.second_button = QPushButton('Многостраничная выгрузка')
         button_group.addButton(self.second_button)
-        self.main_v_box.addWidget(self.second_button)
+        # self.main_v_box.addWidget(self.second_button)
+        self.main_v_box.addLayout(self.ending_h_box)
+        self.ending_h_box.addWidget(self.second_button)
+        self.ending_h_box.addWidget(self.back_button)
 
 
         self.main_v_box.addWidget(self.confirm_button)
+        # self.main_v_box.addWidget(self.back_button)
         self.setLayout(self.main_v_box)
 
         seach_action.triggered.connect(self.save_file)
-        # self.save_button.clicked.connect(self.save_file)
+        self.back_button.clicked.connect(self.open_main)
         self.browser_button.clicked.connect(self.openBrowser)
         self.link_url.textChanged.connect(self.enabledUrlButt)
         self.parce_button.clicked.connect(self.parceElement)
@@ -206,5 +230,5 @@ class MainWindow(QWidget):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    window = MainWindow()
+    window = WindowSingleQuery()
     sys.exit(app.exec())

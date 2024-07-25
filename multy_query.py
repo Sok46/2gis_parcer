@@ -45,6 +45,12 @@ class WindowMultyQuery(QWidget):
         path = f_dialog[0]
         self.save_path_textedit.setText(path)
 
+    def open_main(self):
+        from main_window import MainWindow
+        self.hide()
+        self.w = MainWindow()
+        self.w.show()
+
     def multiParce(self):
         # url = input('вставьте ссылку на карту: ')
         count_pages = self.open_browser_spinbox.value()
@@ -164,7 +170,7 @@ class WindowMultyQuery(QWidget):
 
 
     def setUpMainWindow(self):
-        header_label = QLabel("2GIS_Parcer_by_Sergey_Biryukov")
+        header_label = QLabel("2GIS_Parcer")
         header_label.setFont(QFont("Arial", 18))
         header_label.setAlignment(
             Qt.AlignmentFlag.AlignCenter)
@@ -180,11 +186,15 @@ class WindowMultyQuery(QWidget):
         # self.confirm_button.clicked.connect(self.stopDriver)
         # self.confirm_button.clicked.connect(self.close)
 
+        self.back_button = QPushButton("Назад")
+        self.back_button.setEnabled(True)
+
         self.main_v_box = QVBoxLayout()
         self.main_v_box.addWidget(header_label)
         self.main_v_box.addWidget(question_label)
 
         self.main_h_box = QHBoxLayout()
+        self.back_h_box = QHBoxLayout()
 
         self.save_path_textedit = QLineEdit()
         # self.link_url.setAlignment(Qt.AlignmentFlag.AlignRight)
@@ -203,6 +213,7 @@ class WindowMultyQuery(QWidget):
         question_label = QLabel("Введите необходимое количество страниц для парсинга")
         self.main_v_box.addWidget(question_label)
         self.main_v_box.addLayout(self.main_h_box)
+        self.main_v_box.addLayout(self.back_h_box)
         self.open_browser_spinbox = QSpinBox()
         self.open_browser_spinbox.setMaximumWidth(100)
         self.open_browser_spinbox.setAlignment(Qt.AlignmentFlag.AlignRight)
@@ -210,6 +221,8 @@ class WindowMultyQuery(QWidget):
         self.open_browser_spinbox.setMinimum(2)
         # button_group.addButton(self.open_browser_lineEdit)
         self.main_h_box.addWidget(self.open_browser_spinbox)
+        self.back_h_box.addWidget(self.back_button)
+
 
 
         self.parce_button = QPushButton("Начать парсинг")
@@ -225,7 +238,7 @@ class WindowMultyQuery(QWidget):
         self.setLayout(self.main_v_box)
 
         seach_action.triggered.connect(self.save_file)
-        # self.save_button.clicked.connect(self.save_file)
+        self.back_button.clicked.connect(self.open_main)
         self.browser_button.clicked.connect(self.openBrowser)
         # self.link_url.textChanged.connect(self.enabledUrlButt)
         self.parce_button.clicked.connect(self.multiParce)
