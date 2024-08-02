@@ -74,8 +74,8 @@ class WindowMultyQuery(QWidget):
 
         i = 1
         time.sleep(9)
-        scroll_elements = self.driver.find_element(By.CSS_SELECTOR,
-                                              '#root > div > div > div._1sf34doj > div._1u4plm2 > div:nth-child(2) > div:nth-child(1) > div > div:nth-child(2) > div > div > div > div._1tdquig > div._z72pvu > div._3zzdxk > div > div > div > div._1x4k6z7 > div._5ocwns > div:nth-child(2) > svg > path')
+        # scroll_elements = self.driver.find_element(By.CSS_SELECTOR,'#root > div > div > div._1sf34doj > div._1u4plm2 > div:nth-child(2) > div:nth-child(1) > div > div:nth-child(2) > div > div > div > div._1tdquig > div._z72pvu > div._3zzdxk > div > div > div > div._1x4k6z7 > div._5ocwns > div:nth-child(2) > svg > path')
+        scroll_elements = self.driver.find_element(By.CSS_SELECTOR,'#root > div > div > div._1sf34doj > div._1u4plm2 > div:nth-child(3) > div:nth-child(1) > div > div:nth-child(2) > div > div > div > div._1tdquig > div._z72pvu > div._3zzdxk > div > div > div > div._1x4k6z7 > div._5ocwns > div._n5hmn94 > svg > path')
         scr_el = self.driver.find_element(By.CLASS_NAME, '_1rkbbi0x')
         # scroll_element = scroll_elements[]
         file_name = ' хозмаги Шарыпово'
@@ -83,8 +83,11 @@ class WindowMultyQuery(QWidget):
 
         while i <= count_pages:
             time.sleep(3)
-            names = self.driver.find_elements(By.CLASS_NAME, '_zjunba')
+            print(i)
+            # names = self.driver.find_elements(By.CLASS_NAME, '_zjunba')
             items = self.driver.find_elements(By.CLASS_NAME, '_1kf6gff')
+
+            # print('aaa')
 
             for item in items:
                 time.sleep(0.5)
@@ -93,22 +96,27 @@ class WindowMultyQuery(QWidget):
                 except:
                     type_item = ''
 
+
                 if type_item == 'Город':
                     continue
                 else:
+
                     name = item.find_element(By.CLASS_NAME, '_zjunba')
+
                     name.click()
+
                     try:
                         name = name.text
                     except:
                         name = 'error'
-
+                    print(('ccc'))
                     time.sleep(0.5)
                     try:
                         street = self.driver.find_element(By.CSS_SELECTOR,
                                                      '#root > div > div > div._1sf34doj > div._1u4plm2 > div:nth-child(2) > div:nth-child(2) > div > div > div > div > div._jcreqo > div._fjltwx > div > div._3zzdxk > div > div > div > div > div._1b96w9b > div:nth-child(2) > div._t0tx82 > div._8sgdp4 > div > div:nth-child(1) > div._49kxlr > div > div:nth-child(2) > div:nth-child(1)').text
                     except:
                         street = "-"
+                    print(('ddd'))
                     try:
                         descr = self.driver.find_element(By.CLASS_NAME, '_1p8iqzw').text
                     except:
@@ -134,6 +142,7 @@ class WindowMultyQuery(QWidget):
                     long_left = str(self.driver.current_url).split('.')[2][-2:]
 
                     long = str(long_left) + '.' + str(long_right)
+
 
                     print(lat, long)
                     type_arr.append(type_item)
