@@ -19,11 +19,18 @@ class BasePassParcer:
 
     def verify_person(self,ws: Worksheet, person):
 
-        cell: Cell = ws.find(person,in_column=2)
 
-        row = ws.row_values(cell.row)
-        print(row[3])
-        return row[3]
+        cell: Cell = ws.find(person,in_column=2)
+        if cell:
+
+
+            row = ws.row_values(cell.row)
+
+            print(row[3])
+            return row[3]
+        else:
+            print("Нет такого юзера")
+            return None
 
 
     def max_id(self,ws: Worksheet):
@@ -46,12 +53,13 @@ class BasePassParcer:
                 "ALL_COUNT":1,
                 "LAST_QUERY": current_date,
                 "REGISTRY_DATE": current_date}
-        print(sh)
+        # print(sh)
 
-        self.show_worksheets(sh)
+
+        # self.show_worksheets(sh)
         # self.max_id(ws)
         # self.create_value(ws, arr)
-        self.verify_person(ws, "yulia")
+        self.verify_person(ws, "hga")
 
 
 
