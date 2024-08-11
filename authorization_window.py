@@ -8,6 +8,8 @@ from selenium.webdriver.chrome.options import Options
 import datetime
 import gspread
 from gspread import Cell, Client, Spreadsheet, Worksheet
+import socket
+import os
 
 
 import time
@@ -43,11 +45,11 @@ class WindowSingleQuery(QWidget):
         self.len_url = 0
         self.filename = datetime.datetime.now()
         """Создайте и расположите виджеты в главном окне."""
-        header_label = QLabel("2GIS_Parcer")
-        header_label.setFont(QFont("Arial", 18))
-        header_label.setAlignment(
+        self.header_label = QLabel("2GIS_Parcer")
+        self.header_label.setFont(QFont("Arial", 18))
+        self.header_label.setAlignment(
             Qt.AlignmentFlag.AlignCenter)
-        question_label = QLabel("Выберете действие")
+        question_label = QLabel("Введите учётку:")
         question_label.setAlignment(Qt.AlignmentFlag.AlignTop)
 
         button_group = QButtonGroup(self)
@@ -66,7 +68,7 @@ class WindowSingleQuery(QWidget):
         # self.confirm_button.clicked.connect(self.close)
 
         self.main_v_box = QVBoxLayout()
-        self.main_v_box.addWidget(header_label)
+        self.main_v_box.addWidget(self.header_label)
         self.main_v_box.addWidget(question_label)
 
         self.ending_h_box = QHBoxLayout()
@@ -115,9 +117,9 @@ class WindowSingleQuery(QWidget):
 
         # seach_action.triggered.connect(self.save_file)
         self.show_password_cb.toggled.connect(self.displayPasswordIfChecked)
-        self.login_button.pressed.connect(self.start_thread)
+        self.login_button.pressed.connect(self.start_auth_thread)
         # self.login_button.pressed.connect(self.checkAutorization)
-        self.easy_button.clicked.connect(self.openMainEasy)
+        self.easy_button.clicked.connect(self.start_easy_thread)
 
     def displayPasswordIfChecked(self, checked):
         """Если QCheckButton включен, просмотрите пароль.
@@ -163,9 +165,18 @@ class WindowSingleQuery(QWidget):
         self.w = MainWindow()
         self.w.show()
 
-    def start_thread(self):
+    def start_auth_thread(self):
 
-        self.thread = ThreadClass(self.pass_text.text(), self.login_button, self.login_text)
+        self.thread = ThreadClass(self.pass_text.text(), self.login_button, self.login_text, self.header_label, index=1)
+
+        self.thread.any_signal.connect(self.update_progress_bar)
+        self.thread.accept_signal.connect(self.openMainWithLogin)
+
+        self.thread.start()
+
+    def start_easy_thread(self):
+
+        self.thread = ThreadClass(self.pass_text.text(), self.login_button, self.login_text, self.header_label, index=2)
 
         self.thread.any_signal.connect(self.update_progress_bar)
         self.thread.accept_signal.connect(self.openMainWithLogin)
@@ -178,6 +189,9 @@ class WindowSingleQuery(QWidget):
 
 
     def openMainEasy(self):
+        from add_pass_to_base import BasePassParcer
+
+
         from main_window import MainWindow
         self.close()
         self.w = MainWindow()
@@ -187,12 +201,61 @@ class ThreadClass(QThread):
     any_signal = pyqtSignal(int)
     accept_signal = pyqtSignal(int)
 
-    def __init__(self, password, button, user_name, parent=None):
+    def __init__(self, password, button, user_name,label, parent=None, index = 0):
         super(ThreadClass, self).__init__(parent)
+        self.index = index
         self.is_running = True
         self.password = password
         self.button = button
         self.user_name = user_name.text()
+        self.label = label
+
+        self.google_sheet_url = 'https://docs.google.com/spreadsheets/d/1qsd5c5wDWo6YlGu-5SX-Ga8G7E-8XaE20KgMAVDYMD4/edit?gid=0#gid=0'
+        gc: Client = gspread.service_account("./etc/google_service_account.json")
+        sh: Spreadsheet = gc.open_by_url(self.google_sheet_url)
+        self.ws = sh.sheet1
+    def easy_enter(self):
+        from add_pass_to_base import BasePassParcer
+        print(self.ws)
+        # BasePassParcer.verify_person(self, self.ws, self.user_name)
+
+        BasePassParcer.create_value(self, self.ws,"", "")
+
+
+
+        self.accept_signal.emit(100)
+    def checkAutorization(self):
+        from add_pass_to_base import BasePassParcer
+        pass_base = BasePassParcer.verify_person(self, self.ws, self.user_name)
+
+        if pass_base:
+
+            cnt = 50
+            self.any_signal.emit(cnt)
+
+
+            if self.password == pass_base:
+                print("Verno")
+                cnt = 100
+                self.any_signal.emit(cnt)
+                self.accept_signal.emit(cnt)
+
+            else:
+                cnt = 90
+                self.any_signal.emit(cnt)
+                print("Neverno")
+                self.button.setEnabled(True)
+                self.button.setText("Войти")
+                cnt = 0
+                self.any_signal.emit(cnt)
+                self.label.setText("Неверный пароль")
+
+        else:
+            self.label.setText("Неверный логин")
+            self.button.setText("Войти")
+            self.button.setEnabled(True)
+
+
 
 
 
@@ -200,39 +263,20 @@ class ThreadClass(QThread):
 
 
     def run(self):
+        print(self.index, 'index')
         self.button.setEnabled(False)
         self.button.setText("Ожидайте")
-
-
-        cnt = 0
+        self.label.setText("Загрузка...")
 
         from add_pass_to_base import BasePassParcer
-        self.google_sheet_url = 'https://docs.google.com/spreadsheets/d/1qsd5c5wDWo6YlGu-5SX-Ga8G7E-8XaE20KgMAVDYMD4/edit?gid=0#gid=0'
         cnt = 10
         self.any_signal.emit(cnt)
-        gc: Client = gspread.service_account("./etc/google_service_account.json")
-        sh: Spreadsheet = gc.open_by_url(self.google_sheet_url)
-        ws = sh.sheet1
+        # pass_base = BasePassParcer.verify_person(self, self.ws, self.user_name)
+        if self.index == 1:
+            self.checkAutorization()
+        elif self.index == 2:
+            self.easy_enter()
 
-        pass_base = BasePassParcer.verify_person(self, ws, self.user_name)
-        cnt = 50
-        self.any_signal.emit(cnt)
-
-
-        if self.password == pass_base:
-            print("Verno")
-            cnt = 100
-            self.any_signal.emit(cnt)
-            self.accept_signal.emit(cnt)
-
-        else:
-            cnt = 90
-            self.any_signal.emit(cnt)
-            print("Neverno")
-            self.button.setEnabled(True)
-            self.button.setText("Войти")
-            cnt = 0
-            self.any_signal.emit(cnt)
 
 
         # while self.is_running and cnt <= 100:
