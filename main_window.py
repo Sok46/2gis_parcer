@@ -5,14 +5,14 @@ from PyQt6.QtWidgets import (QApplication, QWidget,QDialog,QMainWindow, QLabel, 
 from PyQt6.QtGui import QFont, QPixmap, QAction, QIcon
 from PyQt6.QtCore import Qt
 from multy_query import WindowMultyQuery
+from authorization_window import WindowAuth
 
 
 class MainWindow(QWidget):
-    # def __init__(self):
-    #     super(WindowMultyQuery, self).__init__()
-    #     self.setWindowTitle('Window2')
-    def __init__(self):
+    def __init__(self, count_queries = 0, id_person = 10):
         super().__init__()
+        self.count_queries = count_queries
+        self.id_person = id_person
 
         self.initializeUI()
 
@@ -25,16 +25,22 @@ class MainWindow(QWidget):
 
     def open_multyquery(self):
         self.hide()
-        self.w = WindowMultyQuery()
+        self.w = WindowMultyQuery(self.count_queries,self.id_person)
         self.w.show()
     def open_singlequery(self):
         from single_query import WindowSingleQuery
         self.close()
-        self.w = WindowSingleQuery()
+        self.w = WindowSingleQuery(self.count_queries, self.id_person)
         self.w.show()
 
+    def get_all_queries(self):
+        self.all_queries = WindowAuth.get_all_queries()
+        return self.all_queries
+
+        # self.all_queries = self.thread.get_all_queries()
+
     def setUpMainWindow(self):
-        header_label = QLabel("2GIS_Parcer")
+        header_label = QLabel(f"У вас {self.count_queries} запросов")
         header_label.setFont(QFont("Arial", 18))
         header_label.setAlignment(
             Qt.AlignmentFlag.AlignCenter)
@@ -42,10 +48,6 @@ class MainWindow(QWidget):
         question_label.setAlignment(Qt.AlignmentFlag.AlignTop)
 
         button_group = QButtonGroup(self)
-        # button_group.buttonClicked.connect(
-        #     self.checkboxClicked)
-
-
 
         self.main_v_box = QVBoxLayout()
         self.main_v_box.addWidget(header_label)
@@ -73,13 +75,7 @@ class MainWindow(QWidget):
         self.multy_button.setEnabled(True)
         self.main_v_box.addWidget(self.multy_button)
 
-        # self.second_button = QPushButton('Многостраничная выгрузка')
-        # button_group.addButton(self.second_button)
-        # self.main_v_box.addWidget(self.second_button)
-
-
         self.setLayout(self.main_v_box)
-
         self.single_button.clicked.connect(self.open_singlequery)
         # self.link_url.textChanged.connect(self.enabledUrlButt)
         self.multy_button.clicked.connect(self.open_multyquery)

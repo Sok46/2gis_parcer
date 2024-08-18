@@ -8,37 +8,44 @@ import os
 class BasePassParcer:
     def __init__(self):
         self.googe_sheet_url = 'https://docs.google.com/spreadsheets/d/1qsd5c5wDWo6YlGu-5SX-Ga8G7E-8XaE20KgMAVDYMD4/edit?gid=0#gid=0'
-        # self.name = 'sergey'
-        # self.local_ip  = '192.168.31.18'
-        # self.hostname = 'doshi'
-        # self.username = 'bibasos1337'
-        # self.company = 'center'
-        # # self.password = 'biba228'
-        # self.name = name
-        # self.local_ip  = local_ip
-        # self.hostname = hostname
-        # self.username = username
-        # self.company = company
-        # self.password = password
+        self.all_query = 1000
+        self.id_person = None
+    def verify_computer(self,ws: Worksheet ): #если мы нажали на кнопку без авторизации
+        def get_local_ip():
+            hostname = socket.gethostname()
+            local_ip = socket.gethostbyname(hostname)
+            print(local_ip)
+            username = os.getlogin()
+            return local_ip, username
 
-    def my_method(self):
-        print(111)
-    def show_worksheets(self,sh: Spreadsheet):
-        worksheets = sh.worksheets()
-        for ws in worksheets:
-            print(ws)
+        local_ip, username = get_local_ip()
 
-    # def create_value(self,ws: Worksheet, arr):
-    #     ws.insert_rows([list(arr.values())],2)
+        cell_1: Cell = ws.find(local_ip, in_column=3)
+        # cell_2: Cell = ws.find(username, in_column=5)
+
+        if cell_1 :
+            row = ws.row_values(cell_1.row)
+            print(row[4],"row4")
+            if row[4] == username:
+                print("такой комп есть")
+                self.id_person = row[0]
+                self.all_query = row[7]
+                print('id = ', row[0])
+                print('query = ', self.all_query)
+                return row[0], row[7]
+            else:
+                print("ЕСть ip, но нет  ")
+                return False
+        else:
+            print("Нет такого компа")
+            return False
+
     def create_value(self,ws: Worksheet, company, password):
         def max_id(ws: Worksheet):
             arr_id = ws.col_values(1, value_render_option="UNFORMATTED_VALUE")[1:]
             new_id = max(arr_id) + 1
             return new_id
-        print(228)
-
         current_date = datetime.date.today().isoformat()
-        print(111)
         arr = {"id": max_id(ws),
                "NAME": None,
                "LOCAL_IP": socket.gethostbyname(socket.gethostname()),
@@ -50,65 +57,48 @@ class BasePassParcer:
                "ALL_COUNT": 0,
                "LAST_QUERY": current_date,
                "REGISTRY_DATE": current_date}
-        print(1488)
-
         ws.insert_rows([list(arr.values())],2)
 
     def verify_person(self,ws: Worksheet, person):
-
-
         cell: Cell = ws.find(person,in_column=2)
         if cell:
-
-
             row = ws.row_values(cell.row)
-
-            print(row[3])
-            return row[3]
+            self.id_person = row[0] #ид компьютера
+            self.all_query = row[7] #подгружаем к-во запросов
+            print("id = ",row[0])
+            return row[0],row[6], row[7]
         else:
             print("Нет такого юзера")
             return None
+    def get_queries(self, ws: Worksheet, id_person):
+        cell: Cell = ws.find(str(id_person),in_column=1)
+        if cell:
+            row = ws.row_values(cell.row)
+            print(row[7])
+            return row[7]
 
+    def set_queries(self, ws: Worksheet, id_person, value):
+        cell: Cell = ws.find(str(id_person),in_column=1)
+        if cell:
+            row = cell.row
+            ws.update_cell(row, 8, value)
 
-    def max_id(self,ws: Worksheet):
-        arr_id = ws.col_values(1, value_render_option="UNFORMATTED_VALUE")[1:]
-        new_id = max(arr_id) + 1
-        return new_id
+    def spend_query(self, ws: Worksheet):
+        self.all_query -= 1
 
-    def get_local_ip(self):
-        hostname = socket.gethostname()
-        local_ip = socket.gethostbyname(hostname)
-        print(local_ip)
-        username = os.getlogin()
-        print(f"Имя пользователя: {username}")
-
+        print(self.all_query)
 
     def main(self):
         gc: Client = gspread.service_account("./etc/google_service_account.json")
         sh: Spreadsheet = gc.open_by_url(self.googe_sheet_url)
         ws = sh.sheet1
-        current_date = datetime.date.today().isoformat()
-        # arr = [0,"biba", "pass228", 5000,0, current_date]
-        # arr = {"id": self.max_id(ws) ,
-        #         "NAME":self.name,
-        #         "LOCAL_IP":self.local_ip,
-        #         "HOSTNAME":self.hostname,
-        #         "USERNAME":self.username,
-        #         "COMPANY":self.company,
-        #         "PASS":self.password,
-        #         "COUNT":5000,
-        #         "ALL_COUNT":0,
-        #         "LAST_QUERY": current_date,
-        #         "REGISTRY_DATE": current_date}
-        # print(sh)
+        # self.verify_computer(ws)
+        # self.spend_query(ws)
+        self.set_queries(ws, 10)
 
 
-        # self.show_worksheets(sh)
-        # self.max_id(ws)
-        self.create_value(ws, 1,2)
 
-        self.verify_person(ws, "hga")
-        # self.create_value(ws, "hga")
+
 
 
 

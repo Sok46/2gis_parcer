@@ -6,6 +6,9 @@ from PyQt6.QtGui import QFont, QPixmap, QAction, QIcon
 from PyQt6.QtCore import Qt
 from selenium.webdriver.chrome.options import Options
 import datetime
+from add_pass_to_base import BasePassParcer
+import gspread
+from gspread import Cell, Client, Spreadsheet, Worksheet
 
 import time
 
@@ -15,16 +18,25 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from multy_query import WindowMultyQuery
-
-
 import threading
 
 
+
 class WindowSingleQuery(QWidget):
-    def __init__(self):
+    def __init__(self,count_queries,id_person):
         super().__init__()
+        self.count_queries = count_queries
+        self.id_person = id_person
+        self.my_base = BasePassParcer()
 
         self.initializeUI()
+        self.google_sheet_login()
+
+    def google_sheet_login(self):
+        self.googe_sheet_url = 'https://docs.google.com/spreadsheets/d/1qsd5c5wDWo6YlGu-5SX-Ga8G7E-8XaE20KgMAVDYMD4/edit?gid=0#gid=0'
+        gc: Client = gspread.service_account("./etc/google_service_account.json")
+        sh: Spreadsheet = gc.open_by_url(self.googe_sheet_url)
+        self.ws = sh.sheet1
 
     def initializeUI(self):
         """Set up the application's GUI."""
@@ -36,7 +48,7 @@ class WindowSingleQuery(QWidget):
     def show_window_2(self):
 
         self.close()
-        self.w = WindowMultyQuery()
+        self.w = WindowMultyQuery(self.count_queries)
         self.w.show()
 
     def checkboxClicked(self, button):
@@ -65,6 +77,11 @@ class WindowSingleQuery(QWidget):
         print('Спарсить')
 
     def parceElement(self):
+        if self.count_queries < 1:
+            self.parce_button.setEnabled(False)
+            self.header_label.setStyleSheet("color: red;")
+            return
+
         points = []
         ulitsa = []
         geos = []
@@ -128,6 +145,12 @@ class WindowSingleQuery(QWidget):
             head = True
         df.to_csv(self.link_url.text(), sep=';',
                   encoding='utf8', index=False, mode='a', header=head)
+        self.count_queries -= 1
+
+        print(self.count_queries)
+        self.header_label.setText(f"У вас {self.count_queries} запросов")
+        self.my_base.set_queries(self.ws,self.id_person, self.count_queries)
+
 
 
     def enabledUrlButt(self):
@@ -148,7 +171,7 @@ class WindowSingleQuery(QWidget):
     def open_main(self):
         from main_window import MainWindow
         self.hide()
-        self.w = MainWindow()
+        self.w = MainWindow(self.count_queries)
         self.w.show()
 
 
@@ -156,9 +179,9 @@ class WindowSingleQuery(QWidget):
         self.len_url = 0
         self.filename = datetime.datetime.now()
         """Создайте и расположите виджеты в главном окне."""
-        header_label = QLabel("2GIS_Parcer")
-        header_label.setFont(QFont("Arial", 18))
-        header_label.setAlignment(
+        self.header_label = QLabel(f"У вас {self.count_queries} запросов")
+        self.header_label.setFont(QFont("Arial", 18))
+        self.header_label.setAlignment(
             Qt.AlignmentFlag.AlignCenter)
         question_label = QLabel("Выберете действие")
         question_label.setAlignment(Qt.AlignmentFlag.AlignTop)
@@ -179,13 +202,10 @@ class WindowSingleQuery(QWidget):
         # self.confirm_button.clicked.connect(self.close)
 
         self.main_v_box = QVBoxLayout()
-        self.main_v_box.addWidget(header_label)
+        self.main_v_box.addWidget(self.header_label)
         self.main_v_box.addWidget(question_label)
 
         self.ending_h_box = QHBoxLayout()
-
-
-
 
         self.link_url = QLineEdit()
         # self.link_url.setAlignment(Qt.AlignmentFlag.AlignRight)

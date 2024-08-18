@@ -12,15 +12,30 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+import gspread
+from gspread import Cell, Client, Spreadsheet, Worksheet
+from add_pass_to_base import BasePassParcer
 
 class WindowMultyQuery(QWidget):
     # def __init__(self):
     #     super(WindowMultyQuery, self).__init__()
     #     self.setWindowTitle('Window2')
-    def __init__(self):
+    def __init__(self,count_queries = 25, id_person = 10):
         super().__init__()
 
+
+        self.count_queries = int(count_queries)
+        self.id_person = id_person
+        self.my_base = BasePassParcer()
+
         self.initializeUI()
+        self.google_sheet_login()
+
+    def google_sheet_login(self):
+        self.googe_sheet_url = 'https://docs.google.com/spreadsheets/d/1qsd5c5wDWo6YlGu-5SX-Ga8G7E-8XaE20KgMAVDYMD4/edit?gid=0#gid=0'
+        gc: Client = gspread.service_account("./etc/google_service_account.json")
+        sh: Spreadsheet = gc.open_by_url(self.googe_sheet_url)
+        self.ws = sh.sheet1
 
     def initializeUI(self):
         """Set up the application's GUI."""
@@ -48,7 +63,7 @@ class WindowMultyQuery(QWidget):
     def open_main(self):
         from main_window import MainWindow
         self.hide()
-        self.w = MainWindow()
+        self.w = MainWindow(self.count_queries)
         self.w.show()
 
     def multiParce(self):
@@ -86,9 +101,17 @@ class WindowMultyQuery(QWidget):
             print(i)
             # names = self.driver.find_elements(By.CLASS_NAME, '_zjunba')
             items = self.driver.find_elements(By.CLASS_NAME, '_1kf6gff')
+            print(len(items))
+            print(self.count_queries, type(self.count_queries))
+            if len(items) > int(self.count_queries):
+                self.parce_button.setEnabled(False)
+                self.header_label.setStyleSheet("color: red;")
+                self.header_label.setText(f"У вас {self.count_queries} запросов, этого недостаточно")
 
-            # print('aaa')
+                return
 
+            print('aaa')
+            j = 0
             for item in items:
                 time.sleep(0.5)
                 try:
@@ -100,6 +123,7 @@ class WindowMultyQuery(QWidget):
                 if type_item == 'Город':
                     continue
                 else:
+                    j += 1
 
                     name = item.find_element(By.CLASS_NAME, '_zjunba')
 
@@ -172,16 +196,24 @@ class WindowMultyQuery(QWidget):
                                'count_voices': arr_voices, 'lat': arr_lat, 'long': arr_long})
             df.to_csv(self.save_path_textedit.text(), sep=';',
                       encoding='utf8', index=False)
+            print('csv cheeeck')
 
-            # читаем данные из строки DataFrame
-            data = pd.read_csv(self.save_path_textedit.text(),
-                               sep=';')
+            self.count_queries -= j
+
+            print(self.count_queries)
+            self.header_label.setText(f"У вас {self.count_queries} запросов")
+            print(self.ws)
+            print(self.id_person)
+            print(int(self.count_queries))
+            self.my_base.set_queries(self.ws, int(self.id_person), int(self.count_queries))
+
+
 
 
     def setUpMainWindow(self):
-        header_label = QLabel("2GIS_Parcer")
-        header_label.setFont(QFont("Arial", 18))
-        header_label.setAlignment(
+        self.header_label = QLabel(f"У вас {self.count_queries} запросов")
+        self.header_label.setFont(QFont("Arial", 18))
+        self.header_label.setAlignment(
             Qt.AlignmentFlag.AlignCenter)
         question_label = QLabel("Выберете действие")
         question_label.setAlignment(Qt.AlignmentFlag.AlignTop)
@@ -199,7 +231,7 @@ class WindowMultyQuery(QWidget):
         self.back_button.setEnabled(True)
 
         self.main_v_box = QVBoxLayout()
-        self.main_v_box.addWidget(header_label)
+        self.main_v_box.addWidget(self.header_label)
         self.main_v_box.addWidget(question_label)
 
         self.main_h_box = QHBoxLayout()

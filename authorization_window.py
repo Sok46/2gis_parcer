@@ -20,12 +20,9 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from multy_query import WindowMultyQuery
-
-
 import threading
 
-
-class WindowSingleQuery(QWidget):
+class WindowAuth(QWidget):
     def __init__(self):
         super().__init__()
 
@@ -37,9 +34,6 @@ class WindowSingleQuery(QWidget):
         self.setWindowTitle("2GIS parcer_by_Sergey_Biryukov")
         self.setUpMainWindow()
         self.show()
-
-
-
 
     def setUpMainWindow(self):
         self.len_url = 0
@@ -108,11 +102,6 @@ class WindowSingleQuery(QWidget):
         self.main_v_box.addLayout(self.ending_h_box)
         self.ending_h_box.addWidget(self.easy_button)
 
-
-
-
-        # self.main_v_box.addWidget(self.confirm_button)
-        # self.main_v_box.addWidget(self.back_button)
         self.setLayout(self.main_v_box)
 
         # seach_action.triggered.connect(self.save_file)
@@ -156,13 +145,20 @@ class WindowSingleQuery(QWidget):
             self.login_button.setEnabled(True)
             self.login_button.setText("Войти")
 
-
+    def get_all_queries(self):
+        self.all_queries, self.id_person = self.thread.get_all_queries()
+        # return self.all_queries, self.id_person
 
     def openMainWithLogin(self):
         from main_window import MainWindow
+        print("all = ",self.get_all_queries())
+
+
+
 
         self.close()
-        self.w = MainWindow()
+        self.get_all_queries()
+        self.w = MainWindow(self.all_queries, self.id_person)
         self.w.show()
 
     def start_auth_thread(self):
@@ -175,13 +171,13 @@ class WindowSingleQuery(QWidget):
         self.thread.start()
 
     def start_easy_thread(self):
-
         self.thread = ThreadClass(self.pass_text.text(), self.login_button, self.login_text, self.header_label, index=2)
+        # self.id_person, self.all_query = self.thread.easy_enter()
 
         self.thread.any_signal.connect(self.update_progress_bar)
         self.thread.accept_signal.connect(self.openMainWithLogin)
-
         self.thread.start()
+
 
     def update_progress_bar(self, value):
         self.prog_bar.setValue(value)
@@ -193,6 +189,7 @@ class WindowSingleQuery(QWidget):
 
 
         from main_window import MainWindow
+
         self.close()
         self.w = MainWindow()
         self.w.show()
@@ -214,29 +211,37 @@ class ThreadClass(QThread):
         gc: Client = gspread.service_account("./etc/google_service_account.json")
         sh: Spreadsheet = gc.open_by_url(self.google_sheet_url)
         self.ws = sh.sheet1
+
+    def get_all_queries(self):
+        return self.all_queries, self.id_person
+        # print("get_all_queries",self.all_queries)
+        from add_pass_to_base import BasePassParcer
+
     def easy_enter(self):
         from add_pass_to_base import BasePassParcer
-        print(self.ws)
-        # BasePassParcer.verify_person(self, self.ws, self.user_name)
+        self.id_person, self.all_queries  = BasePassParcer.verify_computer(self, self.ws)
+        if self.all_queries != None:
 
-        BasePassParcer.create_value(self, self.ws,"", "")
-
-
-
-        self.accept_signal.emit(100)
+            print(self.all_queries)
+            # self.id_person, self.all_query = verify
+            # return self.id_person, self.all_query
+            # print(self.id_person, self.all_query)
+            # print(verify)
+        else:
+            BasePassParcer.create_value(self, self.ws,"", "")
+        self.accept_signal.emit(100) #перейти в следующее окно
     def checkAutorization(self):
         from add_pass_to_base import BasePassParcer
         pass_base = BasePassParcer.verify_person(self, self.ws, self.user_name)
 
         if pass_base:
-
             cnt = 50
+            self.id_person,enter_password ,self.all_query = pass_base
             self.any_signal.emit(cnt)
-
-
-            if self.password == pass_base:
+            if self.password == enter_password:
                 print("Verno")
                 cnt = 100
+
                 self.any_signal.emit(cnt)
                 self.accept_signal.emit(cnt)
 
@@ -258,10 +263,6 @@ class ThreadClass(QThread):
 
 
 
-
-
-
-
     def run(self):
         print(self.index, 'index')
         self.button.setEnabled(False)
@@ -278,14 +279,6 @@ class ThreadClass(QThread):
             self.easy_enter()
 
 
-
-        # while self.is_running and cnt <= 100:
-        #     cnt += 1
-        #
-        #     time.sleep(0.1)
-        #     if cnt == 100:
-        #         break
-
     def stop(self):
         self.is_running = False
         self.terminate()
@@ -299,7 +292,7 @@ class ThreadClass(QThread):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    window = WindowSingleQuery()
+    window = WindowAuth()
     sys.exit(app.exec())
 
 
