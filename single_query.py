@@ -25,7 +25,7 @@ import threading
 class WindowSingleQuery(QWidget):
     def __init__(self,count_queries,id_person):
         super().__init__()
-        self.count_queries = count_queries
+        self.count_queries = int(count_queries)
         self.id_person = id_person
         self.my_base = BasePassParcer()
 
@@ -77,10 +77,13 @@ class WindowSingleQuery(QWidget):
         print('Спарсить')
 
     def parceElement(self):
+        print("!!!")
         if self.count_queries < 1:
             self.parce_button.setEnabled(False)
             self.header_label.setStyleSheet("color: red;")
             return
+
+        print(222)
 
         points = []
         ulitsa = []
@@ -90,6 +93,7 @@ class WindowSingleQuery(QWidget):
         arr_stars = []
         arr_voices = []
         type_arr = []
+        print(333)
 
         def find_item(by_method, value):
             try:
@@ -104,7 +108,7 @@ class WindowSingleQuery(QWidget):
             except:
                 item = 'error'
             return item
-
+        print(4)
         name = find_item('class', '_tvxwjf')
         type_item = find_item('class', '_1idnaau')
         street = find_item('css',
@@ -145,10 +149,13 @@ class WindowSingleQuery(QWidget):
             head = True
         df.to_csv(self.link_url.text(), sep=';',
                   encoding='utf8', index=False, mode='a', header=head)
+
         self.count_queries -= 1
+
 
         print(self.count_queries)
         self.header_label.setText(f"У вас {self.count_queries} запросов")
+        print(self.id_person)
         self.my_base.set_queries(self.ws,self.id_person, self.count_queries)
 
 

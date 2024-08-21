@@ -135,6 +135,7 @@ class WindowAuth(QWidget):
         gc: Client = gspread.service_account("./etc/google_service_account.json")
         sh: Spreadsheet = gc.open_by_url(self.google_sheet_url)
         ws = sh.sheet1
+        self.ws_tarif = sh.worksheet('tarifs')
 
         pass_base = BasePassParcer.verify_person(self,ws,"yulia")
 
@@ -219,8 +220,9 @@ class ThreadClass(QThread):
 
     def easy_enter(self):
         from add_pass_to_base import BasePassParcer
-        self.id_person, self.all_queries  = BasePassParcer.verify_computer(self, self.ws)
-        if self.all_queries != None:
+        base_pass_parser = BasePassParcer()
+        self.id_person, self.all_queries = base_pass_parser.verify_computer(self.ws)
+        if self.id_person is not None:
 
             print(self.all_queries)
             # self.id_person, self.all_query = verify
@@ -228,11 +230,19 @@ class ThreadClass(QThread):
             # print(self.id_person, self.all_query)
             # print(verify)
         else:
-            BasePassParcer.create_value(self, self.ws,"", "")
+
+            print("Создан новый пользователь")
+            # base_pass_parser.create_value(self.ws, "", "")
         self.accept_signal.emit(100) #перейти в следующее окно
+    # def get_tarif(self):
+    #     from add_pass_to_base import BasePassParcer
+    #     base_pass_parser = BasePassParcer()
+    #     base_pass_parser.get_tarif()
+
     def checkAutorization(self):
         from add_pass_to_base import BasePassParcer
-        pass_base = BasePassParcer.verify_person(self, self.ws, self.user_name)
+        base_pass_parser = BasePassParcer()
+        pass_base = base_pass_parser.verify_person(self, self.ws, self.user_name)
 
         if pass_base:
             cnt = 50

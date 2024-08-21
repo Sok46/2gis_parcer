@@ -10,7 +10,16 @@ class BasePassParcer:
         self.googe_sheet_url = 'https://docs.google.com/spreadsheets/d/1qsd5c5wDWo6YlGu-5SX-Ga8G7E-8XaE20KgMAVDYMD4/edit?gid=0#gid=0'
         self.all_query = 1000
         self.id_person = None
+        gc: Client = gspread.service_account("./etc/google_service_account.json")
+        sh: Spreadsheet = gc.open_by_url(self.googe_sheet_url)
+        self.ws = sh.sheet1
+        self.ws_tarif = sh.worksheet('tarifs')
+
     def verify_computer(self,ws: Worksheet ): #если мы нажали на кнопку без авторизации
+        def max_id(ws: Worksheet):
+            arr_id = ws.col_values(1, value_render_option="UNFORMATTED_VALUE")[1:]
+            new_id = max(arr_id) + 1
+            return new_id
         def get_local_ip():
             hostname = socket.gethostname()
             local_ip = socket.gethostbyname(hostname)
@@ -20,7 +29,7 @@ class BasePassParcer:
 
         local_ip, username = get_local_ip()
 
-        cell_1: Cell = ws.find(local_ip, in_column=3)
+        cell_1: Cell = ws.find(local_ip, in_column=3) #Ищем наш ip в списке IP
         # cell_2: Cell = ws.find(username, in_column=5)
 
         if cell_1 :
@@ -34,11 +43,18 @@ class BasePassParcer:
                 print('query = ', self.all_query)
                 return row[0], row[7]
             else:
-                print("ЕСть ip, но нет  ")
-                return False
+                print("ЕСть ip, но нет  юзера")
+                non_authorisation_tarif = self.get_tarif(self.ws_tarif, 'non_authorisation')
+                print(non_authorisation_tarif)
+                new_id = max_id(ws)
+                self.create_value(self.ws, "", "")
+                return new_id, non_authorisation_tarif
         else:
             print("Нет такого компа")
-            return False
+            non_authorisation_tarif = self.get_tarif(self.ws_tarif, 'non_authorisation')
+            new_id = max_id(ws)
+            self.create_value(self.ws, "", "")
+            return new_id, non_authorisation_tarif
 
     def create_value(self,ws: Worksheet, company, password):
         def max_id(ws: Worksheet):
@@ -83,18 +99,27 @@ class BasePassParcer:
             row = cell.row
             ws.update_cell(row, 8, value)
 
-    def spend_query(self, ws: Worksheet):
-        self.all_query -= 1
-
-        print(self.all_query)
+    def get_tarif(self, ws: Worksheet,tarif):
+        cell: Cell = ws.find(tarif, in_column=1)
+        if cell:
+            row = ws.row_values(cell.row)
+            name_tarif = row[0]
+            query_tarif = row[1]
+            print(query_tarif)
+            print(name_tarif)
+            return query_tarif
+        else:
+            print("Нет такого Тарифа")
+            return None
 
     def main(self):
         gc: Client = gspread.service_account("./etc/google_service_account.json")
         sh: Spreadsheet = gc.open_by_url(self.googe_sheet_url)
         ws = sh.sheet1
+        self.ws_tarif = sh.worksheet('tarifs')
         # self.verify_computer(ws)
         # self.spend_query(ws)
-        self.set_queries(ws, 10)
+        # self.get_tarif(self.ws_tarif, "non_autorisation")
 
 
 
