@@ -170,6 +170,7 @@ class WindowAuth(QWidget):
         self.thread.accept_signal.connect(self.openMainWithLogin)
 
         self.thread.start()
+        print(111)
 
     def start_easy_thread(self):
         self.thread = ThreadClass(self.pass_text.text(), self.login_button, self.login_text, self.header_label, index=2)
@@ -241,19 +242,26 @@ class ThreadClass(QThread):
 
     def checkAutorization(self):
         from add_pass_to_base import BasePassParcer
+        print("checkAutorization")
+
         base_pass_parser = BasePassParcer()
-        pass_base = base_pass_parser.verify_person(self, self.ws, self.user_name)
+        print(self.user_name)
+        self.id_person, pass_base, self.all_queries = base_pass_parser.verify_person( self.ws, self.user_name)
+        print("pass=", pass_base)
 
         if pass_base:
             cnt = 50
-            self.id_person,enter_password ,self.all_query = pass_base
+            print(cnt)
+            # self.id_person,enter_password ,self.all_query = pass_base
             self.any_signal.emit(cnt)
-            if self.password == enter_password:
+            if self.password == pass_base:
                 print("Verno")
                 cnt = 100
 
                 self.any_signal.emit(cnt)
+                print(99)
                 self.accept_signal.emit(cnt)
+                print(100)
 
             else:
                 cnt = 90

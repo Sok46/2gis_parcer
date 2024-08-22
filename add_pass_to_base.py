@@ -76,8 +76,10 @@ class BasePassParcer:
         ws.insert_rows([list(arr.values())],2)
 
     def verify_person(self,ws: Worksheet, person):
+        print("verify_person")
         cell: Cell = ws.find(person,in_column=2)
         if cell:
+            print("Такой юзер есть")
             row = ws.row_values(cell.row)
             self.id_person = row[0] #ид компьютера
             self.all_query = row[7] #подгружаем к-во запросов
