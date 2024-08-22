@@ -6,7 +6,7 @@ from PyQt6.QtGui import QFont, QPixmap, QAction, QIcon
 from PyQt6.QtCore import Qt
 from selenium.webdriver.chrome.options import Options
 import datetime
-from add_pass_to_base import BasePassParcer
+
 import gspread
 from gspread import Cell, Client, Spreadsheet, Worksheet
 
@@ -27,7 +27,7 @@ class WindowSingleQuery(QWidget):
         super().__init__()
         self.count_queries = int(count_queries)
         self.id_person = id_person
-        self.my_base = BasePassParcer()
+
 
         self.initializeUI()
         self.google_sheet_login()
@@ -77,6 +77,9 @@ class WindowSingleQuery(QWidget):
         print('Спарсить')
 
     def parceElement(self):
+        from add_pass_to_base import BasePassParcer
+
+        self.my_base = BasePassParcer()
         print("!!!")
         if self.count_queries < 1:
             self.parce_button.setEnabled(False)

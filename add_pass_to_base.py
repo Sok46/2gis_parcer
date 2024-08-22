@@ -47,16 +47,16 @@ class BasePassParcer:
                 non_authorisation_tarif = self.get_tarif(self.ws_tarif, 'non_authorisation')
                 print(non_authorisation_tarif)
                 new_id = max_id(ws)
-                self.create_value(self.ws, "", "")
+                self.create_value(self.ws, "", "", 'non_authorisation')
                 return new_id, non_authorisation_tarif
         else:
             print("Нет такого компа")
             non_authorisation_tarif = self.get_tarif(self.ws_tarif, 'non_authorisation')
             new_id = max_id(ws)
-            self.create_value(self.ws, "", "")
+            self.create_value(self.ws, "", "",'non_authorisation')
             return new_id, non_authorisation_tarif
 
-    def create_value(self,ws: Worksheet, company, password):
+    def create_value(self,ws: Worksheet, company, password, tarif = 'non_authorisation'):
         def max_id(ws: Worksheet):
             arr_id = ws.col_values(1, value_render_option="UNFORMATTED_VALUE")[1:]
             new_id = max(arr_id) + 1
@@ -69,7 +69,8 @@ class BasePassParcer:
                "USERNAME": os.getlogin(),
                "COMPANY": company,
                "PASS": password,
-               "COUNT": 5000,
+               "COUNT": int(self.get_tarif(self.ws_tarif, tarif)),
+               "TARIF": tarif,
                "ALL_COUNT": 0,
                "LAST_QUERY": current_date,
                "REGISTRY_DATE": current_date}
