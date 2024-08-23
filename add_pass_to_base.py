@@ -11,9 +11,9 @@ class BasePassParcer:
         self.all_query = 1000
         self.id_person = None
         gc: Client = gspread.service_account("./etc/google_service_account.json")
-        sh: Spreadsheet = gc.open_by_url(self.googe_sheet_url)
-        self.ws = sh.sheet1
-        self.ws_tarif = sh.worksheet('tarifs')
+        self.sh: Spreadsheet = gc.open_by_url(self.googe_sheet_url)
+        self.ws = self.sh.sheet1
+        self.ws_tarif = self.sh.worksheet('tarifs')
 
     def verify_computer(self,ws: Worksheet ): #если мы нажали на кнопку без авторизации
         def max_id(ws: Worksheet):
@@ -96,11 +96,52 @@ class BasePassParcer:
             print(row[7])
             return row[7]
 
-    def set_queries(self, ws: Worksheet, id_person, value):
-        cell: Cell = ws.find(str(id_person),in_column=1)
+    # def set_queries(self, ws: Worksheet, id_person, value):
+    #     cell: Cell = ws.find(str(id_person),in_column=1)
+    #     if cell:
+    #         row = cell.row
+    #         ws.update_cell(row, 8, value)
+
+    def set_queries(self, ws: Worksheet, id_person, sh: Spreadsheet, value):
+        cell: Cell = ws.find(str(id_person), in_column=1)
         if cell:
             row = cell.row
-            ws.update_cell(row, 8, value)
+            updates = [
+                {
+                    'updateCells': {
+                        'rows': [{'values': [{'userEnteredValue': {'numberValue': value}}]}],
+                        'fields': '*',
+                        'range': {
+                            'sheetId': ws.id,
+                            'startRowIndex': row - 1,
+                            'endRowIndex': row,
+                            'startColumnIndex': 7,
+                            'endColumnIndex': 8
+                        }
+                    }
+                },
+                {
+                    'updateCells': {
+                        'rows': [{'values': [{'userEnteredValue': {'stringValue': datetime.date.today().isoformat()}}]}],
+                        'fields': '*',
+                        'range': {
+                            'sheetId': ws.id,
+                            'startRowIndex': row - 1,
+                            'endRowIndex': row,
+                            'startColumnIndex': 10,
+                            'endColumnIndex': 11
+                        }
+                    }
+                }
+            ]
+
+            # Форматирование тела запроса
+            body = {'requests': updates}
+
+            # Выполнение batch_update
+            sh.batch_update(body)
+
+
 
     def get_tarif(self, ws: Worksheet,tarif):
         cell: Cell = ws.find(tarif, in_column=1)
@@ -116,12 +157,12 @@ class BasePassParcer:
             return None
 
     def main(self):
-        gc: Client = gspread.service_account("./etc/google_service_account.json")
-        sh: Spreadsheet = gc.open_by_url(self.googe_sheet_url)
-        ws = sh.sheet1
-        self.ws_tarif = sh.worksheet('tarifs')
+        # gc: Client = gspread.service_account("./etc/google_service_account.json")
+        # self.sh: Spreadsheet = gc.open_by_url(self.googe_sheet_url)
+        # ws = self.sh.sheet1
+        # self.ws_tarif = self.sh.worksheet('tarifs')
         # self.verify_computer(ws)
-        # self.spend_query(ws)
+        self.set_queries2(self.ws,9,self.sh,400)
         # self.get_tarif(self.ws_tarif, "non_autorisation")
 
 

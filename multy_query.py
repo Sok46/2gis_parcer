@@ -34,8 +34,8 @@ class WindowMultyQuery(QWidget):
     def google_sheet_login(self):
         self.googe_sheet_url = 'https://docs.google.com/spreadsheets/d/1qsd5c5wDWo6YlGu-5SX-Ga8G7E-8XaE20KgMAVDYMD4/edit?gid=0#gid=0'
         gc: Client = gspread.service_account("./etc/google_service_account.json")
-        sh: Spreadsheet = gc.open_by_url(self.googe_sheet_url)
-        self.ws = sh.sheet1
+        self.sh: Spreadsheet = gc.open_by_url(self.googe_sheet_url)
+        self.ws = self.sh.sheet1
 
     def initializeUI(self):
         """Set up the application's GUI."""
@@ -205,7 +205,8 @@ class WindowMultyQuery(QWidget):
             print(self.ws)
             print(self.id_person)
             print(int(self.count_queries))
-            self.my_base.set_queries(self.ws, int(self.id_person), int(self.count_queries))
+            self.my_base.set_queries(self.ws, int(self.id_person), self.sh, int(self.count_queries))
+            # self.my_base.set_queries(self.ws, int(self.id_person), int(self.count_queries))
 
 
 
@@ -271,20 +272,13 @@ class WindowMultyQuery(QWidget):
         self.parce_button.setEnabled(False)
         self.main_h_box.addWidget(self.parce_button)
 
-        # self.second_button = QPushButton('Многостраничная выгрузка')
-        # button_group.addButton(self.second_button)
-        # self.main_v_box.addWidget(self.second_button)
-
         self.main_v_box.addWidget(self.confirm_button)
         self.setLayout(self.main_v_box)
 
         seach_action.triggered.connect(self.save_file)
         self.back_button.clicked.connect(self.open_main)
         self.browser_button.clicked.connect(self.openBrowser)
-        # self.link_url.textChanged.connect(self.enabledUrlButt)
         self.parce_button.clicked.connect(self.multiParce)
-        # self.second_button.clicked.connect(self.show_window_2)
-
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

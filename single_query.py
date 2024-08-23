@@ -1,8 +1,8 @@
 import sys
 import os
 from PyQt6.QtWidgets import (QApplication, QWidget, QLabel, QPushButton, QLineEdit, QButtonGroup, QVBoxLayout,
-                             QCheckBox, QFileDialog,QHBoxLayout)
-from PyQt6.QtGui import QFont, QPixmap, QAction, QIcon
+                              QFileDialog,QHBoxLayout)
+from PyQt6.QtGui import QFont, QIcon
 from PyQt6.QtCore import Qt
 from selenium.webdriver.chrome.options import Options
 import datetime
@@ -13,12 +13,11 @@ from gspread import Cell, Client, Spreadsheet, Worksheet
 import time
 
 import pandas as pd
-
-from selenium.webdriver.common.action_chains import ActionChains
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from multy_query import WindowMultyQuery
-import threading
+from add_pass_to_base import BasePassParcer
+
 
 
 
@@ -27,6 +26,7 @@ class WindowSingleQuery(QWidget):
         super().__init__()
         self.count_queries = int(count_queries)
         self.id_person = id_person
+        self.my_base = BasePassParcer()
 
 
         self.initializeUI()
@@ -35,8 +35,8 @@ class WindowSingleQuery(QWidget):
     def google_sheet_login(self):
         self.googe_sheet_url = 'https://docs.google.com/spreadsheets/d/1qsd5c5wDWo6YlGu-5SX-Ga8G7E-8XaE20KgMAVDYMD4/edit?gid=0#gid=0'
         gc: Client = gspread.service_account("./etc/google_service_account.json")
-        sh: Spreadsheet = gc.open_by_url(self.googe_sheet_url)
-        self.ws = sh.sheet1
+        self.sh: Spreadsheet = gc.open_by_url(self.googe_sheet_url)
+        self.ws = self.sh.sheet1
 
     def initializeUI(self):
         """Set up the application's GUI."""
@@ -77,16 +77,15 @@ class WindowSingleQuery(QWidget):
         print('Спарсить')
 
     def parceElement(self):
-        from add_pass_to_base import BasePassParcer
 
-        self.my_base = BasePassParcer()
+
+
         print("!!!")
         if self.count_queries < 1:
             self.parce_button.setEnabled(False)
             self.header_label.setStyleSheet("color: red;")
             return
 
-        print(222)
 
         points = []
         ulitsa = []
@@ -96,7 +95,7 @@ class WindowSingleQuery(QWidget):
         arr_stars = []
         arr_voices = []
         type_arr = []
-        print(333)
+
 
         def find_item(by_method, value):
             try:
@@ -111,7 +110,7 @@ class WindowSingleQuery(QWidget):
             except:
                 item = 'error'
             return item
-        print(4)
+
         name = find_item('class', '_tvxwjf')
         type_item = find_item('class', '_1idnaau')
         street = find_item('css',
@@ -155,11 +154,9 @@ class WindowSingleQuery(QWidget):
 
         self.count_queries -= 1
 
-
-        print(self.count_queries)
         self.header_label.setText(f"У вас {self.count_queries} запросов")
-        print(self.id_person)
-        self.my_base.set_queries(self.ws,self.id_person, self.count_queries)
+
+        self.my_base.set_queries(self.ws,self.id_person, self.sh, self.count_queries)
 
 
 

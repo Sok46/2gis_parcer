@@ -248,20 +248,17 @@ class ThreadClass(QThread):
         print(self.user_name)
         self.id_person, pass_base, self.all_queries = base_pass_parser.verify_person( self.ws, self.user_name)
         print("pass=", pass_base)
+        cnt = 50
+        self.any_signal.emit(cnt)
 
         if pass_base:
-            cnt = 50
-            print(cnt)
-            # self.id_person,enter_password ,self.all_query = pass_base
+            cnt = 60
             self.any_signal.emit(cnt)
             if self.password == pass_base:
                 print("Verno")
                 cnt = 100
-
                 self.any_signal.emit(cnt)
-                print(99)
                 self.accept_signal.emit(cnt)
-                print(100)
 
             else:
                 cnt = 90
@@ -293,6 +290,7 @@ class ThreadClass(QThread):
         # pass_base = BasePassParcer.verify_person(self, self.ws, self.user_name)
         if self.index == 1:
             self.checkAutorization()
+
         elif self.index == 2:
             self.easy_enter()
 
