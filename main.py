@@ -1,7 +1,5 @@
 import time
-
 import pandas as pd
-
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium import webdriver
 from selenium.webdriver.common.by import By

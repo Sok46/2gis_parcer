@@ -1,8 +1,6 @@
 import sys
-import os
-from PyQt6.QtWidgets import (QApplication, QWidget,QDialog,QMainWindow, QLabel, QPushButton, QLineEdit, QButtonGroup, QVBoxLayout,QHBoxLayout,QSpinBox,
-                             QCheckBox, QFileDialog)
-from PyQt6.QtGui import QFont, QPixmap, QAction, QIcon
+from PyQt6.QtWidgets import (QApplication, QWidget, QLabel, QPushButton, QLineEdit, QButtonGroup, QVBoxLayout,QHBoxLayout)
+from PyQt6.QtGui import QFont, QIcon
 from PyQt6.QtCore import Qt
 from multy_query import WindowMultyQuery
 from authorization_window import WindowAuth

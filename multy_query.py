@@ -1,25 +1,18 @@
 import sys
-import os
-from PyQt6.QtWidgets import (QApplication, QWidget, QLabel, QPushButton, QLineEdit, QButtonGroup, QVBoxLayout,QHBoxLayout,QSpinBox,
-                             QCheckBox, QFileDialog)
-from PyQt6.QtGui import QFont, QPixmap, QAction, QIcon
+from PyQt6.QtWidgets import (QApplication, QWidget, QLabel, QPushButton, QLineEdit, QButtonGroup, QVBoxLayout,QHBoxLayout,QSpinBox,QFileDialog)
+from PyQt6.QtGui import QFont, QIcon
 from PyQt6.QtCore import Qt
-
 import time
-
 import pandas as pd
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 import gspread
-from gspread import Cell, Client, Spreadsheet, Worksheet
+from gspread import Client, Spreadsheet
 from add_pass_to_base import BasePassParcer
 
 class WindowMultyQuery(QWidget):
-    # def __init__(self):
-    #     super(WindowMultyQuery, self).__init__()
-    #     self.setWindowTitle('Window2')
     def __init__(self,count_queries = 25, id_person = 10):
         super().__init__()
 
@@ -40,7 +33,7 @@ class WindowMultyQuery(QWidget):
     def initializeUI(self):
         """Set up the application's GUI."""
         # self.setMaximumSize(310, 130)
-        self.setWindowTitle("Многостраничная выгрузка")
+        self.setWindowTitle("on_cup | Многостраничная выгрузка")
         self.setUpMainWindow()
         self.show()
 

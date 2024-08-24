@@ -1,27 +1,13 @@
 import sys
-import os
 from PyQt6.QtWidgets import (QApplication, QWidget, QLabel, QPushButton, QLineEdit, QButtonGroup, QVBoxLayout,
-                             QCheckBox, QFileDialog,QHBoxLayout,QProgressBar)
-from PyQt6.QtGui import QFont, QPixmap, QAction, QIcon
+                             QCheckBox,QHBoxLayout,QProgressBar)
+from PyQt6.QtGui import QFont
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
-from selenium.webdriver.chrome.options import Options
 import datetime
 import gspread
-from gspread import Cell, Client, Spreadsheet, Worksheet
+from gspread import Client, Spreadsheet
 import re
-import socket
-import os
 
-
-import time
-
-import pandas as pd
-
-from selenium.webdriver.common.action_chains import ActionChains
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from multy_query import WindowMultyQuery
-import threading
 
 class WindowAuth(QWidget):
     def __init__(self):
@@ -32,7 +18,7 @@ class WindowAuth(QWidget):
     def initializeUI(self):
         """Set up the application's GUI."""
         # self.setMaximumSize(310, 130)
-        self.setWindowTitle("2GIS parcer_by_Sergey_Biryukov")
+        self.setWindowTitle("on_cup")
         self.setUpMainWindow()
         self.show()
 
@@ -59,7 +45,7 @@ class WindowAuth(QWidget):
         self.len_url = 0
         self.filename = datetime.datetime.now()
         """Создайте и расположите виджеты в главном окне."""
-        self.header_label = QLabel("2GIS_Parcer")
+        self.header_label = QLabel("on_cup_parcer")
         self.header_label.setFont(QFont("Arial", 18))
         self.header_label.setAlignment(
             Qt.AlignmentFlag.AlignCenter)
