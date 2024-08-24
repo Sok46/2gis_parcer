@@ -8,6 +8,7 @@ from selenium.webdriver.chrome.options import Options
 import datetime
 import gspread
 from gspread import Cell, Client, Spreadsheet, Worksheet
+import re
 import socket
 import os
 
@@ -34,6 +35,18 @@ class WindowAuth(QWidget):
         self.setWindowTitle("2GIS parcer_by_Sergey_Biryukov")
         self.setUpMainWindow()
         self.show()
+
+    def line_edit_rules(self, line_edit: QLineEdit): #Правила для ввода логина/пароля
+        def is_valid_string(input_string):
+            # Регулярное выражение для проверки: только латинские буквы и специальные символы
+            pattern = r'^[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};":\\|,.<>\/?]+$'
+            return bool(re.match(pattern, input_string))
+        my_text = line_edit.text()
+        if len(set(my_text)) < 4 or is_valid_string(my_text) == False:
+            line_edit.setStyleSheet("color: red;  background-color: white")
+        else:
+            line_edit.setStyleSheet("color: black;  background-color: white")
+
 
     def setUpMainWindow(self):
         self.len_url = 0
@@ -109,6 +122,8 @@ class WindowAuth(QWidget):
         self.login_button.pressed.connect(self.start_auth_thread)
         # self.login_button.pressed.connect(self.checkAutorization)
         self.easy_button.clicked.connect(self.start_easy_thread)
+        self.login_text.textEdited.connect(lambda: self.line_edit_rules(self.login_text))
+        self.pass_text.textEdited.connect(lambda: self.line_edit_rules(self.pass_text))
 
     def displayPasswordIfChecked(self, checked):
         """Если QCheckButton включен, просмотрите пароль.
@@ -142,7 +157,7 @@ class WindowAuth(QWidget):
         if self.pass_text.text() == pass_base:
             print("Verno")
         else:
-            print("Neverno")
+            # print("Neverno")
             self.login_button.setEnabled(True)
             self.login_button.setText("Войти")
 
@@ -152,7 +167,7 @@ class WindowAuth(QWidget):
 
     def openMainWithLogin(self):
         from main_window import MainWindow
-        print("all = ",self.get_all_queries())
+        # print("all = ",self.get_all_queries())
 
 
 
@@ -170,7 +185,7 @@ class WindowAuth(QWidget):
         self.thread.accept_signal.connect(self.openMainWithLogin)
 
         self.thread.start()
-        print(111)
+        # print(111)
 
     def start_easy_thread(self):
         self.thread = ThreadClass(self.pass_text.text(), self.login_button, self.login_text, self.header_label, index=2)
@@ -223,16 +238,16 @@ class ThreadClass(QThread):
         from add_pass_to_base import BasePassParcer
         base_pass_parser = BasePassParcer()
         self.id_person, self.all_queries = base_pass_parser.verify_computer(self.ws)
-        if self.id_person is not None:
-
-            print(self.all_queries)
-            # self.id_person, self.all_query = verify
-            # return self.id_person, self.all_query
-            # print(self.id_person, self.all_query)
-            # print(verify)
-        else:
-
-            print("Создан новый пользователь")
+        # if self.id_person is not None:
+        #
+        #     print("такой компьютер уже есть")
+        #     # self.id_person, self.all_query = verify
+        #     # return self.id_person, self.all_query
+        #     # print(self.id_person, self.all_query)
+        #     # print(verify)
+        # else:
+        #
+        #     print("Создан новый пользователь")
             # base_pass_parser.create_value(self.ws, "", "")
         self.accept_signal.emit(100) #перейти в следующее окно
     # def get_tarif(self):
@@ -242,12 +257,12 @@ class ThreadClass(QThread):
 
     def checkAutorization(self):
         from add_pass_to_base import BasePassParcer
-        print("checkAutorization")
+        # print("checkAutorization")
 
         base_pass_parser = BasePassParcer()
         print(self.user_name)
         self.id_person, pass_base, self.all_queries = base_pass_parser.verify_person( self.ws, self.user_name)
-        print("pass=", pass_base)
+        # print("pass=", pass_base)
         cnt = 50
         self.any_signal.emit(cnt)
 
@@ -255,7 +270,7 @@ class ThreadClass(QThread):
             cnt = 60
             self.any_signal.emit(cnt)
             if self.password == pass_base:
-                print("Verno")
+                # print("Verno")
                 cnt = 100
                 self.any_signal.emit(cnt)
                 self.accept_signal.emit(cnt)
@@ -263,7 +278,7 @@ class ThreadClass(QThread):
             else:
                 cnt = 90
                 self.any_signal.emit(cnt)
-                print("Neverno")
+                # print("Neverno")
                 self.button.setEnabled(True)
                 self.button.setText("Войти")
                 cnt = 0
@@ -279,7 +294,7 @@ class ThreadClass(QThread):
 
 
     def run(self):
-        print(self.index, 'index')
+        # print(self.index, 'index')
         self.button.setEnabled(False)
         self.button.setText("Ожидайте")
         self.label.setText("Загрузка...")
@@ -302,7 +317,7 @@ class ThreadClass(QThread):
 
     def stop(self):
         self.is_running = False
-        print('stop thread...', self.index)
+        # print('stop thread...', self.index)
         self.terminate()
 
 

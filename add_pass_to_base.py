@@ -23,7 +23,7 @@ class BasePassParcer:
         def get_local_ip():
             hostname = socket.gethostname()
             local_ip = socket.gethostbyname(hostname)
-            print(local_ip)
+            # print(local_ip)
             username = os.getlogin()
             return local_ip, username
 
@@ -34,23 +34,23 @@ class BasePassParcer:
 
         if cell_1 :
             row = ws.row_values(cell_1.row)
-            print(row[4],"row4")
+            # print(row[4],"row4")
             if row[4] == username:
-                print("такой комп есть")
+                # print("такой комп есть")
                 self.id_person = row[0]
                 self.all_query = row[7]
                 print('id = ', row[0])
                 print('query = ', self.all_query)
                 return row[0], row[7]
             else:
-                print("ЕСть ip, но нет  юзера")
+                # print("ЕСть ip, но нет  юзера")
                 non_authorisation_tarif = self.get_tarif(self.ws_tarif, 'non_authorisation')
-                print(non_authorisation_tarif)
+                # print(non_authorisation_tarif)
                 new_id = max_id(ws)
                 self.create_value(self.ws, "", "", 'non_authorisation')
                 return new_id, non_authorisation_tarif
         else:
-            print("Нет такого компа")
+            # print("Нет такого компа")
             non_authorisation_tarif = self.get_tarif(self.ws_tarif, 'non_authorisation')
             new_id = max_id(ws)
             self.create_value(self.ws, "", "",'non_authorisation')
@@ -77,23 +77,23 @@ class BasePassParcer:
         ws.insert_rows([list(arr.values())],2)
 
     def verify_person(self,ws: Worksheet, person):
-        print("verify_person")
+        # print("verify_person")
         cell: Cell = ws.find(person,in_column=2)
         if cell:
-            print("Такой юзер есть")
+            # print("Такой юзер есть")
             row = ws.row_values(cell.row)
             self.id_person = row[0] #ид компьютера
             self.all_query = row[7] #подгружаем к-во запросов
-            print("id = ",row[0])
+            # print("id = ",row[0])
             return row[0],row[6], row[7]
         else:
-            print("Нет такого юзера")
+            # print("Нет такого юзера")
             return None
     def get_queries(self, ws: Worksheet, id_person):
         cell: Cell = ws.find(str(id_person),in_column=1)
         if cell:
             row = ws.row_values(cell.row)
-            print(row[7])
+            # print(row[7])
             return row[7]
 
     # def set_queries(self, ws: Worksheet, id_person, value):
@@ -149,8 +149,8 @@ class BasePassParcer:
             row = ws.row_values(cell.row)
             name_tarif = row[0]
             query_tarif = row[1]
-            print(query_tarif)
-            print(name_tarif)
+            # print(query_tarif)
+            # print(name_tarif)
             return query_tarif
         else:
             print("Нет такого Тарифа")
