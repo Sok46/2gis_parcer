@@ -43,9 +43,16 @@ class WindowAuth(QWidget):
             return bool(re.match(pattern, input_string))
         my_text = line_edit.text()
         if len(set(my_text)) < 4 or is_valid_string(my_text) == False:
+            self.login_button.setEnabled(False)
+
             line_edit.setStyleSheet("color: red;  background-color: white")
         else:
             line_edit.setStyleSheet("color: black;  background-color: white")
+        if len(set(self.pass_text.text())) > 3 and len(set(self.login_text.text())) > 3:
+            self.login_button.setEnabled(True)
+        else:
+            self.login_button.setEnabled(False)
+
 
 
     def setUpMainWindow(self):
@@ -96,11 +103,9 @@ class WindowAuth(QWidget):
 
         self.main_v_box.addWidget(self.show_password_cb)
 
-
-
         self.login_button = QPushButton("Войти")
         button_group.addButton(self.login_button)
-        self.login_button.setEnabled(True)
+        self.login_button.setEnabled(False)
         self.main_v_box.addWidget(self.login_button)
 
         self.prog_bar = QProgressBar()
@@ -167,11 +172,6 @@ class WindowAuth(QWidget):
 
     def openMainWithLogin(self):
         from main_window import MainWindow
-        # print("all = ",self.get_all_queries())
-
-
-
-
         self.close()
         self.get_all_queries()
         self.w = MainWindow(self.all_queries, self.id_person)
@@ -189,8 +189,6 @@ class WindowAuth(QWidget):
 
     def start_easy_thread(self):
         self.thread = ThreadClass(self.pass_text.text(), self.login_button, self.login_text, self.header_label, index=2)
-        # self.id_person, self.all_query = self.thread.easy_enter()
-
         self.thread.any_signal.connect(self.update_progress_bar)
         self.thread.accept_signal.connect(self.openMainWithLogin)
         self.thread.start()
@@ -202,9 +200,7 @@ class WindowAuth(QWidget):
 
 
     def openMainEasy(self):
-        from add_pass_to_base import BasePassParcer
-
-
+        # from add_pass_to_base import BasePassParcer
         from main_window import MainWindow
 
         self.close()
@@ -262,7 +258,7 @@ class ThreadClass(QThread):
         base_pass_parser = BasePassParcer()
         print(self.user_name)
         self.id_person, pass_base, self.all_queries = base_pass_parser.verify_person( self.ws, self.user_name)
-        # print("pass=", pass_base)
+        print("pass=", pass_base)
         cnt = 50
         self.any_signal.emit(cnt)
 
@@ -270,7 +266,7 @@ class ThreadClass(QThread):
             cnt = 60
             self.any_signal.emit(cnt)
             if self.password == pass_base:
-                # print("Verno")
+                print("Verno")
                 cnt = 100
                 self.any_signal.emit(cnt)
                 self.accept_signal.emit(cnt)
@@ -278,7 +274,7 @@ class ThreadClass(QThread):
             else:
                 cnt = 90
                 self.any_signal.emit(cnt)
-                # print("Neverno")
+                print("Neverno")
                 self.button.setEnabled(True)
                 self.button.setText("Войти")
                 cnt = 0

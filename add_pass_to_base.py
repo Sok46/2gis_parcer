@@ -88,7 +88,7 @@ class BasePassParcer:
             return row[0],row[6], row[7]
         else:
             # print("Нет такого юзера")
-            return None
+            return None, None,None
     def get_queries(self, ws: Worksheet, id_person):
         cell: Cell = ws.find(str(id_person),in_column=1)
         if cell:
