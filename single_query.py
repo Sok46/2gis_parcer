@@ -22,7 +22,7 @@ from add_pass_to_base import BasePassParcer
 
 
 class WindowSingleQuery(QWidget):
-    def __init__(self,count_queries,id_person):
+    def __init__(self,count_queries=5000,id_person=10):
         super().__init__()
         self.count_queries = int(count_queries)
         self.id_person = id_person
