@@ -81,14 +81,18 @@ class MainWindow(QWidget):
 
         self.route_button = QPushButton("Выгрузка марштуров общественного транспорта")
         button_group.addButton(self.route_button)
-        self.route_button.setEnabled(True)
         self.main_v_box.addWidget(self.route_button)
+
+        self.houses_button = QPushButton("Выгрузка МКД/ИЖС")
+        button_group.addButton(self.houses_button)
+        self.main_v_box.addWidget(self.houses_button)
 
         self.setLayout(self.main_v_box)
         self.single_button.clicked.connect(self.open_singlequery)
         # self.link_url.textChanged.connect(self.enabledUrlButt)
         self.multy_button.clicked.connect(self.open_multyquery)
         self.route_button.clicked.connect(self.open_route_parser)
+
 
 
 if __name__ == '__main__':
