@@ -35,7 +35,7 @@ class WindowYandexRoute(QWidget):
     def initializeUI(self):
         """Set up the application's GUI."""
         # self.setMaximumSize(310, 130)
-        self.setWindowTitle("on_cup | Многостраничная выгрузка")
+        self.setWindowTitle("on_cup | Выгрузка маршрутов")
         self.setUpMainWindow()
         self.show()
 
@@ -278,6 +278,7 @@ class WindowYandexRoute(QWidget):
         self.back_button = QPushButton("Назад")
         self.back_button.setEnabled(True)
 
+
         self.main_v_box = QVBoxLayout()
         self.main_v_box.addWidget(self.header_label)
         self.main_v_box.addWidget(question_label)
@@ -312,33 +313,13 @@ class WindowYandexRoute(QWidget):
 
 
 
-        self.browser_button = QPushButton("Открыть браузер")
-        button_group.addButton(self.browser_button)
+        self.browser_button = QPushButton("Начать парсинг")
         self.browser_button.setEnabled(True)
         self.main_v_box.addWidget(self.browser_button)
-
-
-        question_label = QLabel("Введите необходимое количество страниц для парсинга")
-        self.main_v_box.addWidget(question_label)
-        self.main_v_box.addLayout(self.main_h_box)
-        self.main_v_box.addLayout(self.back_h_box)
-        self.open_browser_spinbox = QSpinBox()
-        self.open_browser_spinbox.setMaximumWidth(100)
-        self.open_browser_spinbox.setAlignment(Qt.AlignmentFlag.AlignRight)
-
-        self.open_browser_spinbox.setMinimum(2)
-        # button_group.addButton(self.open_browser_lineEdit)
-        self.main_h_box.addWidget(self.open_browser_spinbox)
-        self.back_h_box.addWidget(self.back_button)
+        self.main_v_box.addWidget(self.back_button)
 
 
 
-        self.parce_button = QPushButton("Начать парсинг")
-        button_group.addButton(self.parce_button)
-        self.parce_button.setEnabled(False)
-        self.main_h_box.addWidget(self.parce_button)
-
-        self.main_v_box.addWidget(self.confirm_button)
         self.setLayout(self.main_v_box)
 
         seach_action.triggered.connect(self.save_file)

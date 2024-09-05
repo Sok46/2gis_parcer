@@ -37,10 +37,10 @@ class BasePassParcer:
             if row[4] == username:
                 # print("такой комп есть")
                 self.id_person = row[0]
-                self.all_query = row[7]
+                self.all_query = row[9]
                 print('id = ', row[0])
                 print('query = ', self.all_query)
-                return row[0], row[7]
+                return row[0], row[9]
             else:
                 # print("ЕСть ip, но нет  юзера")
                 non_authorisation_tarif = self.get_tarif(self.ws_tarif, 'non_authorisation')
@@ -82,9 +82,9 @@ class BasePassParcer:
             # print("Такой юзер есть")
             row = ws.row_values(cell.row)
             self.id_person = row[0] #ид компьютера
-            self.all_query = row[7] #подгружаем к-во запросов
+            self.all_query = row[9] #подгружаем к-во запросов
             # print("id = ",row[0])
-            return row[0],row[6], row[7]
+            return row[0],row[6], row[9]
         else:
             # print("Нет такого юзера")
             return None, None,None
@@ -93,7 +93,7 @@ class BasePassParcer:
         if cell:
             row = ws.row_values(cell.row)
             # print(row[7])
-            return row[7]
+            return row[9]
 
     # def set_queries(self, ws: Worksheet, id_person, value):
     #     cell: Cell = ws.find(str(id_person),in_column=1)

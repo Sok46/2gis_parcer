@@ -17,7 +17,7 @@ class MainWindow(QWidget):
     def initializeUI(self):
         """Set up the application's GUI."""
         # self.setMaximumSize(310, 130)
-        self.setWindowTitle("2GIS_Parcer_by_Sergey_Biryukov")
+        self.setWindowTitle("on_cup parser")
         self.setUpMainWindow()
         self.show()
 
@@ -29,6 +29,12 @@ class MainWindow(QWidget):
         from single_query import WindowSingleQuery
         self.close()
         self.w = WindowSingleQuery(self.count_queries, self.id_person)
+        self.w.show()
+
+    def open_route_parser(self):
+        from yandex_route_window import WindowYandexRoute
+        self.close()
+        self.w = WindowYandexRoute(self.count_queries, self.id_person)
         self.w.show()
 
     def get_all_queries(self):
@@ -73,10 +79,16 @@ class MainWindow(QWidget):
         self.multy_button.setEnabled(True)
         self.main_v_box.addWidget(self.multy_button)
 
+        self.route_button = QPushButton("Выгрузка марштуров общественного транспорта")
+        button_group.addButton(self.route_button)
+        self.route_button.setEnabled(True)
+        self.main_v_box.addWidget(self.route_button)
+
         self.setLayout(self.main_v_box)
         self.single_button.clicked.connect(self.open_singlequery)
         # self.link_url.textChanged.connect(self.enabledUrlButt)
         self.multy_button.clicked.connect(self.open_multyquery)
+        self.route_button.clicked.connect(self.open_route_parser)
 
 
 if __name__ == '__main__':
