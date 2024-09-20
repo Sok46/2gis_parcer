@@ -36,7 +36,11 @@ class MainWindow(QWidget):
         self.close()
         self.w = WindowYandexRoute(self.count_queries, self.id_person)
         self.w.show()
-
+    def open_gis_jkh(self):
+        from MKD_IJS_Window import WindowGisJkh
+        self.close()
+        self.w = WindowGisJkh(self.count_queries, self.id_person)
+        self.w.show()
     def get_all_queries(self):
         self.all_queries = WindowAuth.get_all_queries()
         return self.all_queries
@@ -89,6 +93,7 @@ class MainWindow(QWidget):
 
         self.setLayout(self.main_v_box)
         self.single_button.clicked.connect(self.open_singlequery)
+        self.houses_button.clicked.connect(self.open_gis_jkh)
         # self.link_url.textChanged.connect(self.enabledUrlButt)
         self.multy_button.clicked.connect(self.open_multyquery)
         self.route_button.clicked.connect(self.open_route_parser)
