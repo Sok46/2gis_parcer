@@ -13,7 +13,7 @@ from gspread import Client, Spreadsheet
 from add_pass_to_base import BasePassParcer
 
 class WindowMultyQuery(QWidget):
-    def __init__(self,count_queries = 25, id_person = 10):
+    def __init__(self,count_queries = 250, id_person = 10):
         super().__init__()
 
 

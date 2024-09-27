@@ -1,12 +1,15 @@
 import sys
-from PyQt6.QtWidgets import (QApplication, QWidget, QLabel, QPushButton, QLineEdit, QButtonGroup, QVBoxLayout,QHBoxLayout,QSpinBox,QFileDialog)
+from PyQt6.QtWidgets import (QApplication, QWidget, QLabel, QPushButton, QLineEdit, QButtonGroup, QVBoxLayout,QHBoxLayout,QFileDialog,QComboBox)
 from PyQt6.QtGui import QFont, QIcon
 from PyQt6.QtCore import Qt
-import pandas as pd
 import os
 import gspread
 from gspread import Client, Spreadsheet
 from add_pass_to_base import BasePassParcer
+import pandas as pd
+import requests
+from urllib.parse import urlencode
+import yadisk
 
 class WindowGisJkh(QWidget):
     def __init__(self,count_queries = 25, id_person = 10):
@@ -17,8 +20,14 @@ class WindowGisJkh(QWidget):
         self.id_person = id_person
         self.my_base = BasePassParcer()
 
+        tkn = "y0_AgAAAAAGvkyVAAyD3AAAAAESV2AkAABx7BX4XRNEv7zh0HWaFEzZX1T2nA"
+        self.y = yadisk.YaDisk(token=tkn)
+        self.gis_folder = "/ГИС ЖКХ/Сведения_об_объектах_жилищного_фонда_на_15-09-2024"
+
         self.initializeUI()
         self.google_sheet_login()
+
+
 
     def google_sheet_login(self):
         self.googe_sheet_url = 'https://docs.google.com/spreadsheets/d/1qsd5c5wDWo6YlGu-5SX-Ga8G7E-8XaE20KgMAVDYMD4/edit?gid=0#gid=0'
@@ -32,18 +41,23 @@ class WindowGisJkh(QWidget):
         self.setWindowTitle("on_cup | Выгрузка маршрутов")
         self.setUpMainWindow()
         self.show()
+    def set_regions(self): #Заполняем комбобокс нашими регионами
 
-    # def openBrowser(self):
-    #     chrome_options = Options()
-    #     chrome_options.add_experimental_option("detach", True)
-    #     self.driver = webdriver.Chrome(options=chrome_options)
-    #     url = 'https://2gis.ru/moscow'
-    #     self.save_path_textedit.setReadOnly(True)
-    #
-    #     self.driver.get(url)
-    #     self.parce_button.setEnabled(True)
-    #     self.browser_button.setEnabled(False)
-    #     self.actions = ActionChains(self.driver)
+        regions = []
+        for item in self.y.listdir(self.gis_folder):
+            file = f"path: {item['path']}"
+            region = file.split('Сведения по ОЖФ ')[1].split(' на ')[0]
+            regions.append(region)
+        self.region_combobox.addItems(sorted(list(set(regions))))
+        print(self.region_combobox.currentText())
+
+    def get_selected_regions(self):
+        for item in self.y.listdir(self.gis_folder):
+
+            if self.region_combobox.itemText() in f"{item['path']}":
+                print(self.region_combobox.currentText())
+
+
     def save_file(self):
         f_dialog = QFileDialog().getExistingDirectory()
         # f_dialog = QFileDialog().getSaveFileName(self, "Save File", "парсинг 2гис", "csv Files (*.csv)")
@@ -149,6 +163,15 @@ class WindowGisJkh(QWidget):
         self.save_path_textedit.setPlaceholderText('Укажите путь для выходного csv ...')
         self.main_v_box.addWidget(self.save_path_textedit)
 
+        region_label = QLabel("Выберете регион")
+        region_label.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.main_v_box.addWidget(region_label)
+        self.region_combobox = QComboBox()
+        self.set_regions()
+        self.main_v_box.addWidget(self.region_combobox)
+
+
+
         cityname_label = QLabel("Название города")
         cityname_label.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.main_v_box.addWidget(cityname_label)
@@ -178,7 +201,7 @@ class WindowGisJkh(QWidget):
 
         seach_action.triggered.connect(self.save_file)
         self.back_button.clicked.connect(self.open_main)
-        self.browser_button.clicked.connect(self.parce)
+        self.browser_button.clicked.connect(self.get_selected_regions)
         # self.parce_button.clicked.connect(self.parce)
 
 if __name__ == '__main__':
