@@ -54,6 +54,8 @@ class WindowGisJkh(QWidget):
     def get_selected_regions(self):
         for item in self.y.listdir(self.gis_folder):
 
+
+
             if self.region_combobox.itemText() in f"{item['path']}":
                 print(self.region_combobox.currentText())
 

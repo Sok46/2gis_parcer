@@ -12,6 +12,7 @@ for item in y.listdir(gis_folder):
     regions.append(region)
 print(set(regions))
 
+
 for item in y.listdir(gis_folder):
     # item.publish()
 
