@@ -149,15 +149,18 @@ class WindowMultyQuery(QWidget):
                                                            '#root > div > div > div._1sf34doj > div._1u4plm2 > div:nth-child(2) > div:nth-child(2) > div > div > div > div > div._jcreqo > div._fjltwx > div > div._3zzdxk > div > div > div > div > div._1tfwnxl > div._146hbp5 > div > div._jspzdm').text
                     except:
                         count_voices = '-'
-                    # print(driver.current_url)
-                    lat_right = str(self.driver.current_url).split('.')[2].split('&')[0].split('?')[0].split('%')[0]
-                    # print(lat_right)
-                    lat_left = str(self.driver.current_url).split('.')[1][-2:]
+
+
+
+                    lat_right = str(self.driver.current_url).split('.')[3].split('&')[0].split('?')[0].split('%')[0]
+                    lat_left = str(self.driver.current_url).split('.')[2][-2:]
+
                     lat = str(lat_left) + '.' + str(lat_right)
 
-                    long_right = str(self.driver.current_url).split('.')[3].split('&')[0].split('?')[0].split('%')[0]
-                    long_left = str(self.driver.current_url).split('.')[2][-2:]
-
+                    long_left = str(self.driver.current_url).split('.')[4].split('%2C')[1]
+                    print(long_left)
+                    long_right = str(self.driver.current_url).split('.')[5].split('%')[0]
+                    print(long_right)
                     long = str(long_left) + '.' + str(long_right)
 
 
@@ -189,7 +192,7 @@ class WindowMultyQuery(QWidget):
                                'count_voices': arr_voices, 'lat': arr_lat, 'long': arr_long})
             df.to_csv(self.save_path_textedit.text(), sep=';',
                       encoding='utf8', index=False)
-            print('csv cheeeck')
+
 
             self.count_queries -= j
 
