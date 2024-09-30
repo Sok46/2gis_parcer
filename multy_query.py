@@ -157,9 +157,9 @@ class WindowMultyQuery(QWidget):
 
                     lat = str(lat_left) + '.' + str(lat_right)
 
-                    long_left = str(self.driver.current_url).split('.')[4].split('%2C')[1]
+                    long_left = str(self.driver.current_url).split('.')[3].split('=')[1]
                     print(long_left)
-                    long_right = str(self.driver.current_url).split('.')[5].split('%')[0]
+                    long_right = str(self.driver.current_url).split('.')[4].split('%')[0]
                     print(long_right)
                     long = str(long_left) + '.' + str(long_right)
 
