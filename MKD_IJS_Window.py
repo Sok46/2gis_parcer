@@ -23,6 +23,7 @@ class WindowGisJkh(QWidget):
         tkn = "y0_AgAAAAAGvkyVAAyD3AAAAAESV2AkAABx7BX4XRNEv7zh0HWaFEzZX1T2nA"
         self.y = yadisk.YaDisk(token=tkn)
         self.gis_folder = "/ГИС ЖКХ/Сведения_об_объектах_жилищного_фонда_на_15-09-2024"
+        self.base_url = 'https://cloud-api.yandex.net/v1/disk/public/resources/download?'
 
         self.initializeUI()
         self.google_sheet_login()
@@ -52,13 +53,25 @@ class WindowGisJkh(QWidget):
         print(self.region_combobox.currentText())
 
     def get_selected_regions(self):
+        self.sheets_urls = []
         for item in self.y.listdir(self.gis_folder):
+            # print(f"{item['path']}")
 
-
-
-            if self.region_combobox.itemText() in f"{item['path']}":
-                print(self.region_combobox.currentText())
-
+            if self.region_combobox.currentText() in f"{item['path']}":
+                print(f"{item['path']}")
+                sheet_url = item['public_url']
+                self.sheets_urls.append(sheet_url)
+    def get_cities(self):
+        self.get_selected_regions()
+        for url in self.sheets_urls:
+            final_url = self.base_url + urlencode(dict(public_key=url))
+            response = requests.get(final_url)
+            download_url = response.json()['href']
+            df = pd.read_csv(download_url, sep='\t')
+            print(df.head(n=2))
+            print(df[' Адрес ОЖФ'])
+            unique_values = df[' Адрес ОЖФ'].unique()
+            print(unique_values)
 
     def save_file(self):
         f_dialog = QFileDialog().getExistingDirectory()
@@ -203,7 +216,7 @@ class WindowGisJkh(QWidget):
 
         seach_action.triggered.connect(self.save_file)
         self.back_button.clicked.connect(self.open_main)
-        self.browser_button.clicked.connect(self.get_selected_regions)
+        self.browser_button.clicked.connect(self.get_cities)
         # self.parce_button.clicked.connect(self.parce)
 
 if __name__ == '__main__':
