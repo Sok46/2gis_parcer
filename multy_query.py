@@ -75,6 +75,7 @@ class WindowMultyQuery(QWidget):
         arr_stars = []
         arr_voices = []
         type_arr = []
+        arr_urls = []
 
         # driver = webdriver.Chrome()
         # driver.get(url)
@@ -152,19 +153,19 @@ class WindowMultyQuery(QWidget):
 
 
 
-                    lat_right = str(self.driver.current_url).split('.')[3].split('&')[0].split('?')[0].split('%')[0]
-                    lat_left = str(self.driver.current_url).split('.')[2][-2:]
+                    long_right = str(self.driver.current_url).split('.')[3].split('&')[0].split('?')[0].split('%')[0]
+                    long_left = str(self.driver.current_url).split('.')[2][-2:]
+
+                    long = str(long_left) + '.' + str(long_right)
+
+                    lat_left = str(self.driver.current_url).split('.')[3].split('=')[1]
+
+                    lat_right = str(self.driver.current_url).split('.')[4].split('%')[0]
 
                     lat = str(lat_left) + '.' + str(lat_right)
 
-                    long_left = str(self.driver.current_url).split('.')[3].split('=')[1]
-                    print(long_left)
-                    long_right = str(self.driver.current_url).split('.')[4].split('%')[0]
-                    print(long_right)
-                    long = str(long_left) + '.' + str(long_right)
-
-
                     print(lat, long)
+                    url = self.driver.current_url
                     type_arr.append(type_item)
                     arr_lat.append(lat)
                     arr_long.append(long)
@@ -174,6 +175,7 @@ class WindowMultyQuery(QWidget):
                     arr_stars.append(stars)
                     arr_voices.append(count_voices)
                     points.append(name)
+                    arr_urls.append(url)
 
             self.actions.move_to_element(scroll_elements).perform()
 
@@ -189,7 +191,7 @@ class WindowMultyQuery(QWidget):
             i += 1
 
             df = pd.DataFrame({'name': points, 'type': type_arr, 'descr': geos, 'ulitsa': ulitsa, 'stars': arr_stars,
-                               'count_voices': arr_voices, 'lat': arr_lat, 'long': arr_long})
+                               'count_voices': arr_voices, 'lat': arr_lat, 'long': arr_long, 'url': arr_urls})
             df.to_csv(self.save_path_textedit.text(), sep=';',
                       encoding='utf8', index=False)
 
