@@ -1,5 +1,6 @@
 import sys
-from PyQt6.QtWidgets import (QApplication, QWidget, QLabel, QPushButton, QLineEdit, QButtonGroup, QVBoxLayout,QHBoxLayout,QFileDialog,QComboBox)
+from PyQt6.QtWidgets import (QApplication, QWidget, QLabel, QPushButton, QLineEdit, QButtonGroup, QVBoxLayout,QHBoxLayout,QFileDialog,
+                             QComboBox,QCheckBox,QGridLayout,QGroupBox,QScrollArea)
 from PyQt6.QtGui import QFont, QIcon
 from PyQt6.QtCore import Qt
 import os
@@ -10,6 +11,7 @@ import pandas as pd
 import requests
 from urllib.parse import urlencode
 import yadisk
+import numpy as np
 
 class WindowGisJkh(QWidget):
     def __init__(self,count_queries = 25, id_person = 10):
@@ -67,11 +69,87 @@ class WindowGisJkh(QWidget):
             final_url = self.base_url + urlencode(dict(public_key=url))
             response = requests.get(final_url)
             download_url = response.json()['href']
-            df = pd.read_csv(download_url, sep='\t')
-            print(df.head(n=2))
-            print(df[' Адрес ОЖФ'])
-            unique_values = df[' Адрес ОЖФ'].unique()
-            print(unique_values)
+            df = pd.read_csv(download_url, sep='|')
+            split_values = df['Адрес ОЖФ'].str.split(',', expand=True)
+            # unique_values = df['Адрес ОЖФ'].str.split(',', expand=True).iloc[:, ::-1]
+
+            # Функция для нахождения нужного элемента после "р-н" или "Респ"
+            def find_element_after(values):
+                # Пытаемся найти индекс элемента, содержащего 'р-н'
+                idx_rn = values[values.str.contains('р-н', na=False)].index
+
+                if len(idx_rn) > 0:
+                    # Если найден 'р-н', возвращаем элемент после него
+                    idx = idx_rn[0] + 1
+                else:
+                    # Если не найден 'р-н', ищем 'Респ'
+                    idx_resp = values[values.str.contains('Респ', na=False)].index
+                    if len(idx_resp) > 0:
+                        # Если найден 'Респ', возвращаем элемент после него
+                        idx = idx_resp[0] + 1
+                    else:
+                        # Если не найдено ни 'р-н', ни 'Респ', возвращаем NaN
+                        return np.nan
+
+                # Проверяем, есть ли элемент после найденного индекса
+                if idx < len(values):
+                    return values[idx]
+                else:
+                    return np.nan
+
+            # Применяем функцию к каждой строке DataFrame
+            unique_cities = split_values.apply(find_element_after, axis=1).unique()
+
+
+
+
+
+            self.cities_dict = {}
+            for i, city in enumerate(unique_cities):
+                type_city = city.split('. ')[0]
+
+                key = type_city  # первая буква
+                value = city.split('. ')[1]  # вторая буква
+                if key in self.cities_dict:
+                    self.cities_dict[key].append(value)  # добавляем значение к существующему ключу
+                else:
+                    self.cities_dict[key] = [value]  # создаем новый ключ со списком значений
+
+
+                # self.NP_checkbox = QCheckBox(city)
+                #
+                #
+                # row = i // num_columns  # Номер строки
+                # col = i % num_columns  # Номер колонки
+                #
+                # # Добавляем чекбокс в сетку
+                # grid_layout.addWidget(self.NP_checkbox, row, col)
+    def set_cities(self):
+        self.get_cities()
+        city_layout = QVBoxLayout()
+        for header in  self.cities_dict.keys():
+            group = QGroupBox(header)
+            myFont = QFont()
+            myFont.setBold(True)
+            group.setFont(myFont)
+            layout = QVBoxLayout()
+
+            for city in self.cities_dict[header]:
+
+                checkbox = QCheckBox(city)
+                myFont.setBold(False)
+                checkbox.setFont(myFont)
+                layout.addWidget(checkbox)
+            group.setLayout(layout)
+
+            city_layout.addWidget(group)
+
+        self.city_group.setLayout(city_layout)
+        # self.main_v_box.addWidget(self.scroll)
+
+            # self.city_combobox.addItems(unique_cities)
+
+
 
     def save_file(self):
         f_dialog = QFileDialog().getExistingDirectory()
@@ -185,22 +263,11 @@ class WindowGisJkh(QWidget):
         self.set_regions()
         self.main_v_box.addWidget(self.region_combobox)
 
-
-
-        cityname_label = QLabel("Название города")
-        cityname_label.setAlignment(Qt.AlignmentFlag.AlignTop)
-        self.main_v_box.addWidget(cityname_label)
-        self.cityname_textedit = QLineEdit()
-        self.cityname_textedit.setPlaceholderText(" г. Назарово")
-        self.main_v_box.addWidget(self.cityname_textedit)
-
-
-        routes_label = QLabel("Номера маршрутов для скачивания")
-        routes_label.setAlignment(Qt.AlignmentFlag.AlignTop)
-        self.main_v_box.addWidget(routes_label)
-        self.routes_textedit = QLineEdit()
-        self.routes_textedit.setPlaceholderText("1,2,125,троллейбус 1")
-        self.main_v_box.addWidget(self.routes_textedit)
+        self.city_group = QGroupBox("Населённые пункты")
+        self.scroll = QScrollArea()
+        self.scroll.setWidget(self.city_group)
+        self.scroll.setWidgetResizable(True)
+        self.main_v_box.addWidget(self.scroll)
 
 
 
@@ -216,7 +283,7 @@ class WindowGisJkh(QWidget):
 
         seach_action.triggered.connect(self.save_file)
         self.back_button.clicked.connect(self.open_main)
-        self.browser_button.clicked.connect(self.get_cities)
+        self.browser_button.clicked.connect(self.set_cities)
         # self.parce_button.clicked.connect(self.parce)
 
 if __name__ == '__main__':
