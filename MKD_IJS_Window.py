@@ -77,6 +77,11 @@ class WindowGisJkh(QWidget):
 
             # Функция для нахождения нужного элемента после "р-н" или "Респ"
             def find_element_after(values):
+                idx_city = values[values.str.contains('г. ', na=False)].index
+
+                if len(idx_city) > 0:
+                    # Если найден 'г. ', возвращаем элемент, содержащий 'г. '
+                    return values[idx_city[0]]
                 # Пытаемся найти индекс элемента, содержащего 'р-н'
                 idx_rn = values[values.str.contains('р-н', na=False)].index
 
