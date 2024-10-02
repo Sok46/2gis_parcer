@@ -65,7 +65,9 @@ class WindowGisJkh(QWidget):
                 self.sheets_urls.append(sheet_url)
     def get_cities(self):
         self.get_selected_regions()
+        self.cities_dict = {}
         for url in self.sheets_urls:
+            print(url)
             final_url = self.base_url + urlencode(dict(public_key=url))
             response = requests.get(final_url)
             download_url = response.json()['href']
@@ -83,7 +85,7 @@ class WindowGisJkh(QWidget):
                     idx = idx_rn[0] + 1
                 else:
                     # Если не найден 'р-н', ищем 'Респ'
-                    idx_resp = values[values.str.contains('Респ', na=False)].index
+                    idx_resp = values[values.str.contains(self.region_combobox.currentText(), na=False)].index
                     if len(idx_resp) > 0:
                         # Если найден 'Респ', возвращаем элемент после него
                         idx = idx_resp[0] + 1
@@ -91,21 +93,25 @@ class WindowGisJkh(QWidget):
                         # Если не найдено ни 'р-н', ни 'Респ', возвращаем NaN
                         return np.nan
 
+
                 # Проверяем, есть ли элемент после найденного индекса
                 if idx < len(values):
                     return values[idx]
                 else:
                     return np.nan
 
+            print('find_element_after')
             # Применяем функцию к каждой строке DataFrame
             unique_cities = split_values.apply(find_element_after, axis=1).unique()
+            print(unique_cities)
 
 
 
 
 
-            self.cities_dict = {}
+            csv_cities_dict = {}
             for i, city in enumerate(unique_cities):
+                print(city)
                 type_city = city.split('. ')[0]
 
                 key = type_city  # первая буква
@@ -114,6 +120,17 @@ class WindowGisJkh(QWidget):
                     self.cities_dict[key].append(value)  # добавляем значение к существующему ключу
                 else:
                     self.cities_dict[key] = [value]  # создаем новый ключ со списком значений
+            print(111)
+
+            # for key, value in csv_cities_dict.items():
+            #     if key in self.cities_dict:
+            #         self.cities_dict[key].extend(value)  # Добавляем значения из b к существующим в a
+            #     else:
+            #         self.cities_dict[key] = value  # Если ключа нет, добавляем новый ключ и значение
+            # print(222)
+
+        print(self.cities_dict)
+            # print(csv_cities_dict)
 
 
                 # self.NP_checkbox = QCheckBox(city)
