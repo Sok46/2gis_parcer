@@ -153,16 +153,26 @@ class WindowMultyQuery(QWidget):
 
 
 
+                    # long_right = str(self.driver.current_url).split('.')[3].split('&')[0].split('?')[0].split('%')[0]
+                    # long_left = str(self.driver.current_url).split('.')[2][-2:]
+                    #
+                    # long = str(long_left) + '.' + str(long_right)
+                    #
+                    # lat_left = str(self.driver.current_url).split('.')[3].split('=')[1]
+                    #
+                    # lat_right = str(self.driver.current_url).split('.')[4].split('%')[0]
+                    #
+                    # lat = str(lat_left) + '.' + str(lat_right)
+
+                    lat_right = str(self.driver.current_url).split('.')[2].split('&')[0].split('?')[0].split('%')[0]
+                    # print(lat_right)
+                    lat_left = str(self.driver.current_url).split('.')[1][-2:]
+                    lat = str(lat_left) + '.' + str(lat_right)
+
                     long_right = str(self.driver.current_url).split('.')[3].split('&')[0].split('?')[0].split('%')[0]
                     long_left = str(self.driver.current_url).split('.')[2][-2:]
 
                     long = str(long_left) + '.' + str(long_right)
-
-                    lat_left = str(self.driver.current_url).split('.')[3].split('=')[1]
-
-                    lat_right = str(self.driver.current_url).split('.')[4].split('%')[0]
-
-                    lat = str(lat_left) + '.' + str(lat_right)
 
                     print(lat, long)
                     url = self.driver.current_url

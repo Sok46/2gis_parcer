@@ -12,6 +12,7 @@ import requests
 from urllib.parse import urlencode
 import yadisk
 import numpy as np
+import bisect
 
 class WindowGisJkh(QWidget):
     def __init__(self,count_queries = 25, id_person = 10):
@@ -77,26 +78,27 @@ class WindowGisJkh(QWidget):
 
             # Функция для нахождения нужного элемента после "р-н" или "Респ"
             def find_element_after(values):
-                idx_city = values[values.str.contains('г. ', na=False)].index
+                idx_city = values[values.str.contains(r'\bг\. ', na=False)].index
 
                 if len(idx_city) > 0:
                     # Если найден 'г. ', возвращаем элемент, содержащий 'г. '
                     return values[idx_city[0]]
-                # Пытаемся найти индекс элемента, содержащего 'р-н'
-                idx_rn = values[values.str.contains('р-н', na=False)].index
-
-                if len(idx_rn) > 0:
-                    # Если найден 'р-н', возвращаем элемент после него
-                    idx = idx_rn[0] + 1
                 else:
-                    # Если не найден 'р-н', ищем 'Респ'
-                    idx_resp = values[values.str.contains(self.region_combobox.currentText(), na=False)].index
-                    if len(idx_resp) > 0:
-                        # Если найден 'Респ', возвращаем элемент после него
-                        idx = idx_resp[0] + 1
+                    # Пытаемся найти индекс элемента, содержащего 'р-н'
+                    idx_rn = values[values.str.contains(r'\bр-н\b', na=False)].index
+
+                    if len(idx_rn) > 0:
+                        # Если найден 'р-н', возвращаем элемент после него
+                        idx = idx_rn[0] + 1
                     else:
-                        # Если не найдено ни 'р-н', ни 'Респ', возвращаем NaN
-                        return np.nan
+                        # Если не найден 'р-н', ищем 'Респ'
+                        idx_resp = values[values.str.contains(self.region_combobox.currentText(), na=False)].index
+                        if len(idx_resp) > 0:
+                            # Если найден 'Респ', возвращаем элемент после него
+                            idx = idx_resp[0] + 1
+                        else:
+                            # Если не найдено ни 'р-н', ни 'Респ', возвращаем NaN
+                            return np.nan
 
 
                 # Проверяем, есть ли элемент после найденного индекса
@@ -119,12 +121,20 @@ class WindowGisJkh(QWidget):
                 print(city)
                 type_city = city.split('. ')[0]
 
-                key = type_city  # первая буква
-                value = city.split('. ')[1]  # вторая буква
+                key = type_city  # первая часть
+                value = city.split('. ')[1]  # вторая часть
+
+                # Если ключ уже существует в словаре
                 if key in self.cities_dict:
-                    self.cities_dict[key].append(value)  # добавляем значение к существующему ключу
+                    #если город уже есть в словаре (при 2х и более csv)
+                    if value in self.cities_dict[key]:
+                        continue
+                    else:
+                        # Вставляем новое значение в список в алфавитном порядке
+                        bisect.insort(self.cities_dict[key], value)
                 else:
-                    self.cities_dict[key] = [value]  # создаем новый ключ со списком значений
+                    # Создаем новый ключ со списком и сразу добавляем значение
+                    self.cities_dict[key] = [value]
             print(111)
 
             # for key, value in csv_cities_dict.items():
