@@ -18,6 +18,9 @@ from selenium.webdriver.common.by import By
 from multy_query import WindowMultyQuery
 from add_pass_to_base import BasePassParcer
 
+import win32con
+import win32gui
+
 
 
 
@@ -25,8 +28,9 @@ class WindowSingleQuery(QWidget):
     def __init__(self,count_queries=5000,id_person=10):
         super().__init__()
         self.count_queries = int(count_queries)
-        self.id_person = id_person
+        self.myhwnd = id_person
         self.my_base = BasePassParcer()
+        print(int(self.winId()))
 
 
         self.initializeUI()
@@ -60,16 +64,32 @@ class WindowSingleQuery(QWidget):
         chrome_options = Options()
         chrome_options.add_experimental_option("detach", True)
         self.driver = webdriver.Chrome(options=chrome_options)
-        url = 'https://2gis.ru/moscow'
+        url = 'https://2gis.ru/moscow/search/Шины'
         self.link_url.setReadOnly(True)
 
         self.driver.get(url)
         self.parce_button.setEnabled(True)
         self.browser_button.setEnabled(False)
+        self.windowList = []
+        win32gui.EnumWindows(self._enumWindows, None)
+        print(self.windowList)
+
 
         # self.main_v_box.removeWidget(self.save_button)
         # self.main_v_box.removeWidget(self.browser_button)
+    def _enumWindows(self, hwnd, _):
+        # if hwnd == self.myhwnd:
+        #     return
+        if win32gui.IsWindow(hwnd) and win32gui.IsWindowVisible(hwnd) and win32gui.IsWindowEnabled(hwnd):
+            phwnd = win32gui.GetParent(hwnd)
+            title = win32gui.GetWindowText(hwnd)
+            name = win32gui.GetClassName(hwnd)
+            # GetDoubleClickTime = win32gui.GetDoubleClickTime(hwnd)
 
+            if 'Шины — 2ГИС' in title:
+                print('{0}|{1}|\tЗаголовок：{2}\t|\Класс: {3}'.format(hwnd, phwnd, title, name))
+                self.windowList.append(
+                    '{0}|{1}|\tЗаголовок：{2}\t|\Класс: {3}'.format(hwnd, phwnd, title, name))
     def stopDriver(self):
         self.driver.quit()
 
@@ -77,9 +97,6 @@ class WindowSingleQuery(QWidget):
         print('Спарсить')
 
     def parceElement(self):
-
-
-
         print("!!!")
         if self.count_queries < 1:
             self.parce_button.setEnabled(False)

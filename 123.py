@@ -1,45 +1,74 @@
-import pandas as pd
-import requests
-from urllib.parse import urlencode
-import yadisk
-tkn = "y0_AgAAAAAGvkyVAAyD3AAAAAESV2AkAABx7BX4XRNEv7zh0HWaFEzZX1T2nA"
-y = yadisk.YaDisk(token=tkn)
-gis_folder = "/ГИС ЖКХ/Сведения_об_объектах_жилищного_фонда_на_15-09-2024"
-regions = []
-for item in y.listdir(gis_folder):
-    file = f"path: {item['path']}"
-    region = file.split('Сведения по ОЖФ ')[1].split(' на ')[0]
-    regions.append(region)
-print(set(regions))
+from PyQt6.QtGui import QWindow
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QPushButton, QListWidget,\
+    QLabel
+import win32con
+import win32gui
 
 
-for item in y.listdir(gis_folder):
-    # item.publish()
+class Window(QWidget):
 
-    print(f"Название: {item['name']}")
-    # print(f"path: {item['path']}")
-    # print(f"public_url: {item['public_url']}")
+    def __init__(self, *args, **kwargs):
+        super(Window, self).__init__(*args, **kwargs)
+        self.resize(800, 600)
+        layout = QVBoxLayout(self)
 
-    # используем api
-    base_url = 'https://cloud-api.yandex.net/v1/disk/public/resources/download?'
-    public_key = item['public_url']
+        self.myhwnd = int(self.winId())
 
-    # получаем url
-    final_url = base_url + urlencode(dict(public_key=public_key))
-    response = requests.get(final_url)
-    download_url = response.json()['href']
-    # print(download_url)
 
-    # загружаем файл в df
-    download_response = requests.get(download_url)
-    df = pd.read_csv(download_url, sep='\t')
-    print(df)
+        layout.addWidget(QPushButton('Show Tab', self,clicked=self._getWindowList, maximumHeight=30))
+        layout.addWidget(
+            QLabel('Double click to Embedd\nĐịnh dạng là: xử lý | xử lý mẹ | tiêu đề | tên lớp', self, maximumHeight=30))
+        self.windowList = QListWidget(
+            self, itemDoubleClicked=self.onItemDoubleClicked, maximumHeight=200)
+        layout.addWidget(self.windowList)
 
-    #
-    # print(f'Размер: {item["size"]} байт')
-    # print(f"Тип файла: {item['type']}")
-    # print(f"Тип документа: {item['media_type']}")
-    print(f"Дата создания: {item['created']}\n")
+
+    def _getWindowList(self):
+        self.windowList.clear()
+        win32gui.EnumWindows(self._enumWindows, None)
+        # print(win32gui.EnumWindows(self._enumWindows, None))
+
+    def onItemDoubleClicked(self, item):
+        self.windowList.takeItem(self.windowList.indexFromItem(item).row())
+        hwnd, phwnd, _, _ = item.text().split('|')
+
+        hwnd, phwnd = int(hwnd), int(phwnd)
+        print(hwnd, phwnd)
+        style = win32gui.GetWindowLong(hwnd, win32con.GWL_STYLE)
+        exstyle = win32gui.GetWindowLong(hwnd, win32con.GWL_EXSTYLE)
+        print('save', hwnd, style, exstyle)
+
+        widget = QWidget.createWindowContainer(QWindow.fromWinId(hwnd))
+        widget.setFixedHeight(400)
+        widget.hwnd = hwnd
+        widget.phwnd = phwnd
+        widget.style = style
+        widget.exstyle = exstyle
+        widget.setParent(self)
+        layout = QVBoxLayout()
+        layout.addWidget(widget)
+        self.layout().addLayout(layout)
+
+
+    def _enumWindows(self, hwnd, _):
+        if hwnd == self.myhwnd:
+            return
+        if win32gui.IsWindow(hwnd) and win32gui.IsWindowVisible(hwnd) and win32gui.IsWindowEnabled(hwnd):
+            phwnd = win32gui.GetParent(hwnd)
+            title = win32gui.GetWindowText(hwnd)
+            name = win32gui.GetClassName(hwnd)
+            self.windowList.addItem(
+                '{0}|{1}|\tTiêu đề：{2}\t|\Lớp: {3}'.format(hwnd, phwnd, title, name))
+
+
+if __name__ == '__main__':
+    import sys
+    from PyQt6.QtWidgets import QApplication
+    app = QApplication(sys.argv)
+    w = Window()
+    w.show()
+    sys.exit(app.exec())
+
 
 
 
