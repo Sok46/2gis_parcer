@@ -17,8 +17,8 @@ import bisect
 class WindowGisJkh(QWidget):
     def __init__(self,count_queries = 25, id_person = 10):
         super().__init__()
-
-
+        self.stage = 0 # включение кнопок по ходу выполнения программы
+        self.checked_cities = None
         self.count_queries = int(count_queries)
         self.id_person = id_person
         self.my_base = BasePassParcer()
@@ -42,9 +42,39 @@ class WindowGisJkh(QWidget):
     def initializeUI(self):
         """Set up the application's GUI."""
         # self.setMaximumSize(310, 130)
-        self.setWindowTitle("on_cup | Выгрузка маршрутов")
+        self.setWindowTitle("on_cup | Выгрузка домов")
         self.setUpMainWindow()
         self.show()
+
+    def change_directory(self):
+        if len(self.save_path_textedit.text()) > 3:
+            self.scroll.setEnabled(True)
+            self.confirm_button.setEnabled(True)
+            # self.browser_button.setEnabled(True)
+            self.cityname_textedit.setEnabled(True)
+            if len(self.cityname_textedit.text()) > 3: #Если город введен вручную
+                self.stage = 1
+                self.browser_button.setEnabled(True)
+                print(33333)
+            # elif self.checked_cities and len(self.checked_cities) > 0: #Если выбран
+            #     self.stage = 2
+            #     self.browser_button.setEnabled(True)
+            else:
+                self.browser_button.setEnabled(False)
+
+        else:
+            self.stage = 0
+            self.scroll.setEnabled(False)
+            self.confirm_button.setEnabled(False)
+            self.browser_button.setEnabled(False)
+            self.cityname_textedit.setEnabled(False)
+    def enabled_checkbox(self):
+        if self.checked_cities and len(self.checked_cities) > 0:  # Если выбран
+            self.stage = 2
+            self.browser_button.setEnabled(True)
+        else:
+            self.browser_button.setEnabled(False)
+
     def set_regions(self): #Заполняем комбобокс нашими регионами
 
         regions = []
@@ -113,17 +143,12 @@ class WindowGisJkh(QWidget):
             print(unique_cities)
 
 
-
-
-
-            csv_cities_dict = {}
             for i, city in enumerate(unique_cities):
                 print(city)
                 type_city = city.split('. ')[0]
 
                 key = type_city  # первая часть
-                value = city.split('. ')[1]  # вторая часть
-
+                # value = city.split('. ')[1]  # вторая часть
                 # Если ключ уже существует в словаре
                 if key in self.cities_dict:
                     #если город уже есть в словаре (при 2х и более csv)
@@ -135,29 +160,13 @@ class WindowGisJkh(QWidget):
                 else:
                     # Создаем новый ключ со списком и сразу добавляем значение
                     self.cities_dict[key] = [city]
-            print(111)
-
-            # for key, value in csv_cities_dict.items():
-            #     if key in self.cities_dict:
-            #         self.cities_dict[key].extend(value)  # Добавляем значения из b к существующим в a
-            #     else:
-            #         self.cities_dict[key] = value  # Если ключа нет, добавляем новый ключ и значение
-            # print(222)
 
         print(self.cities_dict)
-            # print(csv_cities_dict)
 
-
-                # self.NP_checkbox = QCheckBox(city)
-                #
-                #
-                # row = i // num_columns  # Номер строки
-                # col = i % num_columns  # Номер колонки
-                #
-                # # Добавляем чекбокс в сетку
-                # grid_layout.addWidget(self.NP_checkbox, row, col)
-    def set_cities(self):
+    def set_cities(self): #Вставляет полученные города из get cities в группу
+        self.clearLayout(self.load_city_layout)
         self.get_cities()
+
         city_layout = QVBoxLayout()
         for header in  self.cities_dict.keys():
             group = QGroupBox(header) #Cоздаём группу чекбоксов
@@ -180,10 +189,21 @@ class WindowGisJkh(QWidget):
         self.city_group.setLayout(city_layout)
 
         self.scroll.setWidget(self.city_group)
+        # self.scroll.setLayout(white_layout)
 
         # self.main_v_box.addWidget(self.scroll)
 
             # self.city_combobox.addItems(unique_cities)
+
+    def clearLayout(self, layout):
+        if layout is not None:
+            while layout.count():
+                item = layout.takeAt(0)
+                widget = item.widget()
+                if widget is not None:
+                    widget.deleteLater()
+                else:
+                    self.clearLayout(item.layout())
 
     def on_checkbox_state_changed(self, state):
         # Получаем все тексты активированных чекбоксов
@@ -192,8 +212,8 @@ class WindowGisJkh(QWidget):
             for checkbox in group.findChildren(QCheckBox):
                 if checkbox.isChecked():
                     selected_cities.append(checkbox.text())
-
         self.checked_cities = set(selected_cities)
+        self.enabled_checkbox()
 
     def save_file(self):
         f_dialog = QFileDialog().getExistingDirectory()
@@ -268,6 +288,7 @@ class WindowGisJkh(QWidget):
 
 
 
+
     def setUpMainWindow(self):
         # self.sheets_urls = [] #ссылки на csv Файлы
         self.header_label = QLabel(f"У вас {self.count_queries} запросов")
@@ -314,38 +335,58 @@ class WindowGisJkh(QWidget):
         self.main_v_box.addWidget(self.region_combobox)
 
         self.city_group = QGroupBox("Населённые пункты")
+        self.load_city_layout = QVBoxLayout()
+
         add_cities_button = QPushButton("Подгрузить Населённые пункты")
 
         self.scroll = QScrollArea()
 
-        self.scroll.setWidget(add_cities_button)
-
+        # self.scroll.setWidget(add_cities_button)
         self.scroll.setWidgetResizable(True)
-        self.main_v_box.addWidget(self.scroll)
+        self.scroll.setBaseSize(50,5)
+        self.scroll.baseSize()
 
+
+        self.load_city_layout.addWidget(add_cities_button)
         cityname_label = QLabel("Либо введите название населённого пункта самостоятельно")
         cityname_label.setAlignment(Qt.AlignmentFlag.AlignTop)
-        self.main_v_box.addWidget(cityname_label)
+        # self.main_v_box.addWidget(cityname_label)
         self.cityname_textedit = QLineEdit()
         self.cityname_textedit.setPlaceholderText("г. Махачкала")
-        self.main_v_box.addWidget(self.cityname_textedit)
+        # self.main_v_box.addWidget(self.cityname_textedit)
+
+        self.load_city_layout.addWidget(cityname_label)
+        self.load_city_layout.addWidget(self.cityname_textedit)
+        # self.city_layout.addWidget(self.city_group)
+        self.scroll.setLayout(self.load_city_layout)
+
+        self.main_v_box.addWidget(self.scroll)
+        # self.main_v_box.setEnabled(False)
 
 
 
 
-        self.browser_button = QPushButton("Начать парсинг")
+
+
+
+        self.browser_button = QPushButton("Получить дома")
         self.browser_button.setEnabled(True)
         self.main_v_box.addWidget(self.browser_button)
         self.main_v_box.addWidget(self.back_button)
 
 
-
+        self.change_directory()
         self.setLayout(self.main_v_box)
 
         seach_action.triggered.connect(self.save_file)
         self.back_button.clicked.connect(self.open_main)
         self.browser_button.clicked.connect(self.parce)
         add_cities_button.clicked.connect(self.set_cities)
+
+        #Сигналы для отображения кнопок
+        # self.browser_button.clicked.connect(self.change_directory)
+        self.cityname_textedit.textChanged.connect(self.change_directory)
+        self.save_path_textedit.textChanged.connect(self.change_directory)
 
 
         # self.parce_button.clicked.connect(self.parce)
