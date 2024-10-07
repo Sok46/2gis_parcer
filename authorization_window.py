@@ -7,11 +7,15 @@ import datetime
 import gspread
 from gspread import Client, Spreadsheet
 import re
+import json
+import os
 
 
 class WindowAuth(QWidget):
     def __init__(self):
         super().__init__()
+        self.login_pass_dir = os.path.dirname(os.path.realpath(__file__))
+        self.credentials_path = os.path.join(self.login_pass_dir, "credentials.json")
 
         self.initializeUI()
 
@@ -50,7 +54,7 @@ class WindowAuth(QWidget):
         self.header_label.setAlignment(
             Qt.AlignmentFlag.AlignCenter)
         question_label = QLabel("Введите учётку:")
-        question_label.setAlignment(Qt.AlignmentFlag.AlignTop)
+        question_label.setAlignment(Qt.AlignmentFlag.AlignBottom)
 
         button_group = QButtonGroup(self)
         # button_group.buttonClicked.connect(
@@ -86,8 +90,20 @@ class WindowAuth(QWidget):
         self.main_v_box.addWidget(self.pass_text)
 
         self.show_password_cb = QCheckBox("Показать пароль", self)
+        self.remember_me_checkBox = QCheckBox("Запомнить меня", self)
+        if os.path.exists(self.credentials_path):
+            self.remember_me_checkBox.setChecked(True)
+            with open(self.credentials_path,'r') as json_data:
+                credentials = json.load(json_data)
+                json_user = credentials['username']
+                json_pass = credentials['password']
+                # print("json", json_user)
+            self.login_text.setText(json_user)
+            self.pass_text.setText(json_pass)
+
 
         self.main_v_box.addWidget(self.show_password_cb)
+        self.main_v_box.addWidget(self.remember_me_checkBox)
 
         self.login_button = QPushButton("Войти")
         button_group.addButton(self.login_button)
@@ -161,6 +177,11 @@ class WindowAuth(QWidget):
         self.close()
         self.get_all_queries()
         self.w = MainWindow(self.all_queries, self.id_person)
+        if self.remember_me_checkBox.isChecked():
+            print(111)
+        else:
+            print(self.remember_me_checkBox.isChecked())
+        self.save_credentials()
         self.w.show()
 
     def start_auth_thread(self):
@@ -183,7 +204,20 @@ class WindowAuth(QWidget):
     def update_progress_bar(self, value):
         self.prog_bar.setValue(value)
 
+    def save_credentials(self): # Запомнить пользователя
 
+        if os.path.exists(self.credentials_path):
+
+            if self.remember_me_checkBox.isChecked():
+
+                credentials = {
+                    "username": self.login_text.text(),
+                    "password": self.pass_text.text()
+                }
+                with open(self.credentials_path, "w") as file:
+                    json.dump(credentials, file)
+            else:
+                os.remove(self.credentials_path)
 
     def openMainEasy(self):
         # from add_pass_to_base import BasePassParcer
@@ -294,12 +328,6 @@ class ThreadClass(QThread):
 
     def stop(self):
         self.is_running = False
-        self.terminate()
-
-
-    def stop(self):
-        self.is_running = False
-        # print('stop thread...', self.index)
         self.terminate()
 
 

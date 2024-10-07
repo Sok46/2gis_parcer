@@ -225,7 +225,7 @@ class WindowMultyQuery(QWidget):
         self.header_label.setAlignment(
             Qt.AlignmentFlag.AlignCenter)
         question_label = QLabel("Выберете действие")
-        question_label.setAlignment(Qt.AlignmentFlag.AlignTop)
+        question_label.setAlignment(Qt.AlignmentFlag.AlignBottom)
 
         button_group = QButtonGroup(self)
         # button_group.buttonClicked.connect(

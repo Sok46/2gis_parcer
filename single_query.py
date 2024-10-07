@@ -1,7 +1,7 @@
 import sys
 import os
 from PyQt6.QtWidgets import (QApplication, QWidget, QLabel, QPushButton, QLineEdit, QButtonGroup, QVBoxLayout,
-                              QFileDialog,QHBoxLayout,QGroupBox)
+                              QFileDialog,QHBoxLayout,QGroupBox,QMessageBox)
 from PyQt6.QtGui import QFont, QIcon, QWindow
 from PyQt6.QtCore import Qt
 from selenium.webdriver.chrome.options import Options
@@ -30,8 +30,9 @@ class WindowSingleQuery(QWidget):
         self.count_queries = int(count_queries)
         self.id_person = id_person
         self.my_base = BasePassParcer()
+        self.driver = None
 
-        print(int(self.winId()))
+        # print(int(self.winId()))
 
 
         self.initializeUI()
@@ -51,10 +52,12 @@ class WindowSingleQuery(QWidget):
         self.show()
 
     def show_window_2(self):
-
         self.close()
+        # if self.driver:
+        #     self.driver.close()
         self.w = WindowMultyQuery(self.count_queries)
         self.w.show()
+
 
     def checkboxClicked(self, button):
         """Проверяет, был ли нажат QCheckBox в группе кнопок."""
@@ -64,16 +67,21 @@ class WindowSingleQuery(QWidget):
     def openBrowser(self):
         chrome_options = Options()
         chrome_options.add_experimental_option("detach", True)
+
         self.driver = webdriver.Chrome(options=chrome_options)
+        self.driver.minimize_window()
         url = 'https://2gis.ru/moscow/search/Шины'
         self.link_url.setReadOnly(True)
 
+
         self.driver.get(url)
+
+        # print("selenium handle", self.driver.current_window_handle)
+        # print("selenium handle", self.driver.execute_script("return window.document.title"))
+        # print("selenium handle", self.driver.execute_script("return window.name"))
         self.parce_button.setEnabled(True)
         self.browser_button.setEnabled(False)
-        self.windowList = []
         win32gui.EnumWindows(self._enumWindows, None)
-        print(self.windowList)
 
 
         # self.main_v_box.removeWidget(self.save_button)
@@ -96,10 +104,10 @@ class WindowSingleQuery(QWidget):
 
                 style = win32gui.GetWindowLong(my_window, win32con.GWL_STYLE)
                 exstyle = win32gui.GetWindowLong(my_window, win32con.GWL_EXSTYLE)
-                print('save', my_window, style, exstyle)
+                # print('save', my_window, style, exstyle)
 
                 widget = QWidget.createWindowContainer(QWindow.fromWinId(my_window))
-                widget.setMinimumSize(800,400)
+                widget.setMinimumSize(1200,700)
                 # widget.setFixedHeight(400)
                 # widget.setFixedWidth(800)
                 # widget.setWidgetResizable(True)
@@ -205,8 +213,6 @@ class WindowSingleQuery(QWidget):
             # self.count_queries = 0
             # self.driver.close()
 
-
-
     def enabledUrlButt(self):
         # self.browser_button.setEnabled(True)
         self.len_url = len(self.link_url.text())
@@ -225,9 +231,32 @@ class WindowSingleQuery(QWidget):
 
     def open_main(self):
         from main_window import MainWindow
-        self.hide()
+        self.close()
         self.w = MainWindow(self.count_queries)
         self.w.show()
+        # self.driver.
+        # if self.driver:
+        #     self.driver.close()
+
+    def closeEvent(self, event): #Зарезервированный метод на закрытие программы
+        reply = QMessageBox.question(
+            self,
+            'Подтверждение выхода',
+            'Вы уверены, что хотите закрыть программу?',
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No
+        )
+
+        if reply == QMessageBox.StandardButton.Yes:
+            event.accept()  # Если пользователь нажал "Да", закрываем приложение
+            self.close()
+
+            if self.driver:
+                self.driver.close()
+        else:
+            event.ignore()
+
+
 
 
     def setUpMainWindow(self):
@@ -239,7 +268,7 @@ class WindowSingleQuery(QWidget):
         self.header_label.setAlignment(
             Qt.AlignmentFlag.AlignCenter)
         question_label = QLabel("Выберете действие")
-        question_label.setAlignment(Qt.AlignmentFlag.AlignTop)
+        question_label.setAlignment(Qt.AlignmentFlag.AlignBottom)
 
         button_group = QButtonGroup(self)
         button_group.buttonClicked.connect(

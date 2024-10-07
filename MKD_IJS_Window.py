@@ -349,10 +349,10 @@ class WindowGisJkh(QWidget):
 
         self.load_city_layout.addWidget(add_cities_button)
         cityname_label = QLabel("Либо введите название населённого пункта самостоятельно")
-        cityname_label.setAlignment(Qt.AlignmentFlag.AlignTop)
+        cityname_label.setAlignment(Qt.AlignmentFlag.AlignBottom)
         # self.main_v_box.addWidget(cityname_label)
         self.cityname_textedit = QLineEdit()
-        self.cityname_textedit.setPlaceholderText("г. Махачкала")
+        self.cityname_textedit.setPlaceholderText("Например: г. Махачкала")
         # self.main_v_box.addWidget(self.cityname_textedit)
 
         self.load_city_layout.addWidget(cityname_label)
