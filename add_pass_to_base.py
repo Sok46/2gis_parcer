@@ -114,8 +114,8 @@ class BasePassParcer:
                             'sheetId': ws.id,
                             'startRowIndex': row - 1,
                             'endRowIndex': row,
-                            'startColumnIndex': 7,
-                            'endColumnIndex': 8
+                            'startColumnIndex': 9,
+                            'endColumnIndex': 10
                         }
                     }
                 },
@@ -139,7 +139,12 @@ class BasePassParcer:
 
             # Выполнение batch_update
             sh.batch_update(body)
+            print("Юзер", cell)
+            return cell
 
+        else:
+            print("Такого Юзера не существует")
+            return None
 
 
     def get_tarif(self, ws: Worksheet,tarif):

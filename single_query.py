@@ -1,8 +1,8 @@
 import sys
 import os
 from PyQt6.QtWidgets import (QApplication, QWidget, QLabel, QPushButton, QLineEdit, QButtonGroup, QVBoxLayout,
-                              QFileDialog,QHBoxLayout)
-from PyQt6.QtGui import QFont, QIcon
+                              QFileDialog,QHBoxLayout,QGroupBox)
+from PyQt6.QtGui import QFont, QIcon, QWindow
 from PyQt6.QtCore import Qt
 from selenium.webdriver.chrome.options import Options
 import datetime
@@ -28,8 +28,9 @@ class WindowSingleQuery(QWidget):
     def __init__(self,count_queries=5000,id_person=10):
         super().__init__()
         self.count_queries = int(count_queries)
-        self.myhwnd = id_person
+        self.id_person = id_person
         self.my_base = BasePassParcer()
+
         print(int(self.winId()))
 
 
@@ -86,10 +87,31 @@ class WindowSingleQuery(QWidget):
             name = win32gui.GetClassName(hwnd)
             # GetDoubleClickTime = win32gui.GetDoubleClickTime(hwnd)
 
-            if 'Шины — 2ГИС' in title:
+            if 'Шины в Москве' in title:
                 print('{0}|{1}|\tЗаголовок：{2}\t|\Класс: {3}'.format(hwnd, phwnd, title, name))
-                self.windowList.append(
-                    '{0}|{1}|\tЗаголовок：{2}\t|\Класс: {3}'.format(hwnd, phwnd, title, name))
+                # my_window = hwnd
+                my_window, phwnd = hwnd, phwnd
+                # self.windowList.append(
+                #     '{0}|{1}|\tЗаголовок：{2}\t|\Класс: {3}'.format(hwnd, phwnd, title, name))
+
+                style = win32gui.GetWindowLong(my_window, win32con.GWL_STYLE)
+                exstyle = win32gui.GetWindowLong(my_window, win32con.GWL_EXSTYLE)
+                print('save', my_window, style, exstyle)
+
+                widget = QWidget.createWindowContainer(QWindow.fromWinId(my_window))
+                widget.setMinimumSize(800,400)
+                # widget.setFixedHeight(400)
+                # widget.setFixedWidth(800)
+                # widget.setWidgetResizable(True)
+                widget.my_window = my_window
+                widget.phwnd = phwnd
+                widget.style = style
+                widget.exstyle = exstyle
+                widget.setParent(self)
+                # layout = QVBoxLayout()
+                # layout.addWidget(widget)
+                self.main_h_box.addWidget(widget)
+
     def stopDriver(self):
         self.driver.quit()
 
@@ -166,14 +188,22 @@ class WindowSingleQuery(QWidget):
             head = False
         else:
             head = True
-        df.to_csv(self.link_url.text(), sep=';',
-                  encoding='utf8', index=False, mode='a', header=head)
+
 
         self.count_queries -= 1
 
-        self.header_label.setText(f"У вас {self.count_queries} запросов")
 
-        self.my_base.set_queries(self.ws,self.id_person, self.sh, self.count_queries)
+
+        if self.my_base.set_queries(self.ws,int(self.id_person), self.sh, int(self.count_queries)): # проверка на существоваение id пользователя
+            df.to_csv(self.link_url.text(), sep=';',
+                      encoding='utf8', index=False, mode='a', header=head)
+            self.header_label.setText(f"У вас {self.count_queries} запросов")
+        else:
+            print("Нет юзера")
+            self.header_label.setText(f"Юзера не существует")
+            self.header_label.setStyleSheet("color: red;")
+            # self.count_queries = 0
+            # self.driver.close()
 
 
 
@@ -185,6 +215,7 @@ class WindowSingleQuery(QWidget):
             self.browser_button.setEnabled(True)
         else:
             self.browser_button.setEnabled(False)
+
 
 
     def save_file(self):
@@ -226,6 +257,9 @@ class WindowSingleQuery(QWidget):
         # self.confirm_button.clicked.connect(self.close)
 
         self.main_v_box = QVBoxLayout()
+        self.main_h_box = QHBoxLayout()
+        self.widgets_group = QGroupBox()
+        self.widgets_group.setFixedWidth(300)
         self.main_v_box.addWidget(self.header_label)
         self.main_v_box.addWidget(question_label)
 
@@ -262,8 +296,12 @@ class WindowSingleQuery(QWidget):
 
 
         self.main_v_box.addWidget(self.confirm_button)
+        self.widgets_group.setLayout(self.main_v_box)
+        self.widgets_group.setFixedHeight(220)
+
+        self.main_h_box.addWidget(self.widgets_group)
         # self.main_v_box.addWidget(self.back_button)
-        self.setLayout(self.main_v_box)
+        self.setLayout(self.main_h_box)
 
         seach_action.triggered.connect(self.save_file)
         self.back_button.clicked.connect(self.open_main)
