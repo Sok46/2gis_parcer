@@ -1,8 +1,8 @@
 import sys
 from PyQt6.QtWidgets import (QApplication, QWidget, QLabel, QPushButton, QLineEdit, QButtonGroup, QVBoxLayout,QHBoxLayout,QFileDialog,
-                             QComboBox,QCheckBox,QGridLayout,QGroupBox,QScrollArea)
+                             QComboBox,QCheckBox,QGridLayout,QGroupBox,QScrollArea, QProgressBar)
 from PyQt6.QtGui import QFont, QIcon
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QThread, pyqtSignal, QCoreApplication
 import os
 import gspread
 from gspread import Client, Spreadsheet
@@ -13,6 +13,7 @@ from urllib.parse import urlencode
 import yadisk
 import numpy as np
 import bisect
+
 
 class WindowGisJkh(QWidget):
     def __init__(self,count_queries = 25, id_person = 10):
@@ -25,7 +26,7 @@ class WindowGisJkh(QWidget):
 
         tkn = "y0_AgAAAAAGvkyVAAyD3AAAAAESV2AkAABx7BX4XRNEv7zh0HWaFEzZX1T2nA"
         self.y = yadisk.YaDisk(token=tkn)
-        self.gis_folder = "/ГИС ЖКХ/Сведения_об_объектах_жилищного_фонда_на_15-09-2024"
+        self.gis_folder = "/ГИС ЖКХ/Сведения_об_объектах_жилищного_фонда_на_15-09-2024" #Путь к папке на Яндексе
         self.base_url = 'https://cloud-api.yandex.net/v1/disk/public/resources/download?'
 
         self.initializeUI()
@@ -338,6 +339,7 @@ class WindowGisJkh(QWidget):
         self.load_city_layout = QVBoxLayout()
 
         add_cities_button = QPushButton("Подгрузить Населённые пункты")
+        self.prog_bar = QProgressBar()
 
         self.scroll = QScrollArea()
 
@@ -348,6 +350,7 @@ class WindowGisJkh(QWidget):
 
 
         self.load_city_layout.addWidget(add_cities_button)
+        self.load_city_layout.addWidget(self.prog_bar)
         cityname_label = QLabel("Либо введите название населённого пункта самостоятельно")
         cityname_label.setAlignment(Qt.AlignmentFlag.AlignBottom)
         # self.main_v_box.addWidget(cityname_label)
@@ -381,7 +384,8 @@ class WindowGisJkh(QWidget):
         seach_action.triggered.connect(self.save_file)
         self.back_button.clicked.connect(self.open_main)
         self.browser_button.clicked.connect(self.parce)
-        add_cities_button.clicked.connect(self.set_cities)
+        # add_cities_button.clicked.connect(self.set_cities)
+        add_cities_button.clicked.connect(self.start_auth_thread)
 
         #Сигналы для отображения кнопок
         # self.browser_button.clicked.connect(self.change_directory)
@@ -389,7 +393,146 @@ class WindowGisJkh(QWidget):
         self.save_path_textedit.textChanged.connect(self.change_directory)
 
 
+    def start_auth_thread(self):
+        self.get_selected_regions()
+        self.thread = ThreadClass(self.sheets_urls, self.base_url, self.region_combobox,self.header_label, index=1)
+        self.thread.any_signal.connect(self.update_progress_bar)
+        self.thread.start()
+
+    def update_progress_bar(self, value):
+        self.prog_bar.setValue(value)
         # self.parce_button.clicked.connect(self.parce)
+
+class ThreadClass(QThread):
+    any_signal = pyqtSignal(int)  # Signal to communicate progress updates
+
+
+    def __init__(self, urls, base_url, region_combobox, label, parent=None, index=0):
+        super(ThreadClass, self).__init__(parent)
+        self.index = index
+        self.is_running = True
+        self.sheets_urls = urls  # List of URLs to process
+        self.base_url = base_url  # Base URL for constructing download links
+        self.region_combobox = region_combobox  # Combobox for selecting regions
+        self.label = label  # Label to update UI text
+
+    def get_cities(self):
+        """
+        Retrieves and processes city data from the given sheets URLs.
+        Emits progress updates as the data is processed.
+        """
+        self.cities_dict = {}
+        self.progress = 10  # Initial progress percentage
+        self.any_signal.emit(self.progress)
+
+        step_loading = 80 / len(self.sheets_urls)  # Increment progress based on the number of URLs
+        print('длина',len(self.sheets_urls))
+        print("step loading", step_loading)
+
+        for u, url in enumerate(self.sheets_urls):
+            # Update progress after processing each URL
+            # self.progress += step_loading
+            # print(f"Current progress: {self.progress}")
+            # self.any_signal.emit(self.progress)
+
+            print(url)
+            # Construct the final URL and fetch the data
+            final_url = self.base_url + urlencode(dict(public_key=url))
+            response = requests.get(final_url)
+            download_url = response.json()['href']
+            df = pd.read_csv(download_url, sep='|')
+            split_values = df['Адрес ОЖФ'].str.split(',', expand=True)
+            print(split_values[1].count())
+
+            self.progress +=  1  # Initial progress percentage
+            self.any_signal.emit(self.progress)
+
+            row_delimeter = 1
+            step_row_loading = ((step_loading / split_values[1].count()) * 10000) / len(self.sheets_urls)
+            if step_row_loading < 1:
+                while step_row_loading < 1:
+                    step_row_loading += step_row_loading
+                    print("step_row_loading", step_row_loading)
+
+                    row_delimeter += 1
+            print("step_row_loading", step_row_loading)
+
+
+            self.call_count = 1
+            def find_element_after(values):
+                # print(values.tolist())
+
+                if self.call_count % (10000*row_delimeter) == 0:
+                    self.progress += int(step_row_loading//1)
+                    print(f"Current progress: {self.progress}")
+                    self.any_signal.emit(self.progress)
+
+
+
+                self.call_count += 1  # Увеличиваем счетчик каждый раз при вызове функции
+                # print(self.call_count)
+
+
+                idx_city = values[values.str.contains(r'\bг\. ', na=False)].index
+
+                if len(idx_city) > 0:
+                    return values[idx_city[0]]  # Return the element containing 'г. '
+                else:
+                    idx_rn = values[values.str.contains(r'\bр-н\b', na=False)].index
+                    if len(idx_rn) > 0:
+                        idx = idx_rn[0] + 1  # Return the element after 'р-н'
+                    else:
+                        idx_resp = values[values.str.contains(self.region_combobox.currentText(), na=False)].index
+                        if len(idx_resp) > 0:
+                            idx = idx_resp[0] + 1  # Return the element after 'Респ'
+                        else:
+                            return np.nan
+
+                if idx < len(values):
+                    return values[idx]
+                else:
+                    return np.nan
+
+            # Apply the function to find unique cities
+            unique_cities = split_values.apply(find_element_after, axis=1).unique()
+            print(unique_cities)
+
+            # Add the cities to the dictionary
+            for city in unique_cities:
+                type_city = city.split('. ')[0]
+                if type_city in self.cities_dict:
+                    if city not in self.cities_dict[type_city]:
+                        bisect.insort(self.cities_dict[type_city], city)  # Insert city alphabetically
+                else:
+                    self.cities_dict[type_city] = [city]
+
+            self.progress = int(15 + (step_loading * (u+1)))
+            self.any_signal.emit(self.progress)
+        print(self.cities_dict)
+
+    def run(self):
+        """
+        Main thread execution function. Updates the label and initiates the process of retrieving city data.
+        Emits progress updates during execution.
+        """
+        self.label.setText("Загрузка...")  # Update UI label text during data fetching
+
+        progress = 10  # Initial progress value
+        self.any_signal.emit(progress)
+
+        if self.index == 1:
+            self.get_cities()  # If index is 1, fetch cities
+
+        self.label.setText("Завершено")  # Update label text upon completion
+        progress = 100  # Initial progress value
+        self.any_signal.emit(progress)
+
+
+
+
+
+
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

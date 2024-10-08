@@ -288,8 +288,8 @@ class ThreadClass(QThread):
         self.button.setEnabled(False)
         self.button.setText("Ожидайте")
         self.label.setText("Загрузка...")
-
-        from add_pass_to_base import BasePassParcer
+        #
+        # from add_pass_to_base import BasePassParcer
         cnt = 10
         self.any_signal.emit(cnt)
         # pass_base = BasePassParcer.verify_person(self, self.ws, self.user_name)
