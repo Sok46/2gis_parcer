@@ -187,10 +187,8 @@ class WindowAuth(QWidget):
     def start_auth_thread(self):
 
         self.thread = ThreadClass(self.pass_text.text(), self.login_button, self.login_text, self.header_label, index=1)
-
         self.thread.any_signal.connect(self.update_progress_bar)
         self.thread.accept_signal.connect(self.openMainWithLogin)
-
         self.thread.start()
         # print(111)
 
@@ -205,18 +203,15 @@ class WindowAuth(QWidget):
         self.prog_bar.setValue(value)
 
     def save_credentials(self): # Запомнить пользователя
-
-        if os.path.exists(self.credentials_path):
-
-            if self.remember_me_checkBox.isChecked():
-
-                credentials = {
-                    "username": self.login_text.text(),
-                    "password": self.pass_text.text()
-                }
-                with open(self.credentials_path, "w") as file:
-                    json.dump(credentials, file)
-            else:
+        if self.remember_me_checkBox.isChecked():
+            credentials = {
+                "username": self.login_text.text(),
+                "password": self.pass_text.text()
+            }
+            with open(self.credentials_path, "w") as file:
+                json.dump(credentials, file)
+        else:
+            if os.path.exists(self.credentials_path):
                 os.remove(self.credentials_path)
 
     def openMainEasy(self):
@@ -247,34 +242,16 @@ class ThreadClass(QThread):
 
     def get_all_queries(self):
         return self.all_queries, self.id_person
-        # print("get_all_queries",self.all_queries)
-        from add_pass_to_base import BasePassParcer
+
 
     def easy_enter(self):
         from add_pass_to_base import BasePassParcer
         base_pass_parser = BasePassParcer()
         self.id_person, self.all_queries = base_pass_parser.verify_computer(self.ws)
-        # if self.id_person is not None:
-        #
-        #     print("такой компьютер уже есть")
-        #     # self.id_person, self.all_query = verify
-        #     # return self.id_person, self.all_query
-        #     # print(self.id_person, self.all_query)
-        #     # print(verify)
-        # else:
-        #
-        #     print("Создан новый пользователь")
-            # base_pass_parser.create_value(self.ws, "", "")
         self.accept_signal.emit(100) #перейти в следующее окно
-    # def get_tarif(self):
-    #     from add_pass_to_base import BasePassParcer
-    #     base_pass_parser = BasePassParcer()
-    #     base_pass_parser.get_tarif()
 
     def checkAutorization(self):
         from add_pass_to_base import BasePassParcer
-        # print("checkAutorization")
-
         base_pass_parser = BasePassParcer()
         print(self.user_name)
         self.id_person, pass_base, self.all_queries = base_pass_parser.verify_person( self.ws, self.user_name)
@@ -305,9 +282,6 @@ class ThreadClass(QThread):
             self.label.setText("Неверный логин")
             self.button.setText("Войти")
             self.button.setEnabled(True)
-
-
-
 
     def run(self):
         # print(self.index, 'index')
