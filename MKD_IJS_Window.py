@@ -165,10 +165,15 @@ class WindowGisJkh(QWidget):
         print(self.cities_dict)
 
     def set_cities(self): #Вставляет полученные города из get cities в группу
+        self.cities_dict = self.thread.cities_dict
         self.clearLayout(self.load_city_layout)
-        self.get_cities()
+        # self.get_cities()
+
+
 
         city_layout = QVBoxLayout()
+        city_layout.addWidget(self.download_city_butt)
+
         for header in  self.cities_dict.keys():
             group = QGroupBox(header) #Cоздаём группу чекбоксов
             myFont = QFont()
@@ -190,11 +195,22 @@ class WindowGisJkh(QWidget):
         self.city_group.setLayout(city_layout)
 
         self.scroll.setWidget(self.city_group)
+        # self.download_city_butt.clicked.connect(self.download_cities())
         # self.scroll.setLayout(white_layout)
 
         # self.main_v_box.addWidget(self.scroll)
 
             # self.city_combobox.addItems(unique_cities)
+    def download_cities(self):
+        cities = []
+        for header in  self.cities_dict.keys():
+            for city in self.cities_dict[header]:
+                cities.append(city)
+        df = pd.DataFrame(cities, columns=["города"])
+        df.to_csv(self.save_path_textedit.text() + '/cities.csv', index=False, encoding='cp1251')
+
+
+
 
     def clearLayout(self, layout):
         if layout is not None:
@@ -366,6 +382,7 @@ class WindowGisJkh(QWidget):
         self.main_v_box.addWidget(self.scroll)
         # self.main_v_box.setEnabled(False)
 
+        self.download_city_butt = QPushButton("Выгрузить названия")
 
 
 
@@ -384,8 +401,11 @@ class WindowGisJkh(QWidget):
         seach_action.triggered.connect(self.save_file)
         self.back_button.clicked.connect(self.open_main)
         self.browser_button.clicked.connect(self.parce)
-        # add_cities_button.clicked.connect(self.set_cities)
+
         add_cities_button.clicked.connect(self.start_auth_thread)
+        # add_cities_button.clicked.connect(self.set_cities)
+        self.download_city_butt.clicked.connect(self.download_cities)
+
 
         #Сигналы для отображения кнопок
         # self.browser_button.clicked.connect(self.change_directory)
@@ -399,8 +419,11 @@ class WindowGisJkh(QWidget):
         self.thread.any_signal.connect(self.update_progress_bar)
         self.thread.start()
 
+
     def update_progress_bar(self, value):
         self.prog_bar.setValue(value)
+        if self.prog_bar.value() == 100:
+            self.set_cities()
         # self.parce_button.clicked.connect(self.parce)
 
 class ThreadClass(QThread):
@@ -415,6 +438,8 @@ class ThreadClass(QThread):
         self.base_url = base_url  # Base URL for constructing download links
         self.region_combobox = region_combobox  # Combobox for selecting regions
         self.label = label  # Label to update UI text
+    def return_cities(self):
+        return self.cities_dict
 
     def get_cities(self):
         """
@@ -509,6 +534,8 @@ class ThreadClass(QThread):
             self.progress = int(15 + (step_loading * (u+1)))
             self.any_signal.emit(self.progress)
         print(self.cities_dict)
+        return self.cities_dict
+
 
     def run(self):
         """

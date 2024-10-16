@@ -111,10 +111,10 @@ class WindowMultyQuery(QWidget):
                 try:
                     type_item = item.find_element(By.CLASS_NAME, '_1idnaau').text
                 except:
-                    type_item = ''
+                    type_item = '-'
 
 
-                if type_item == 'Город':
+                if type_item == 'Город' or type_item == 'Памятные доски':
                     continue
                 else:
                     j += 1
@@ -131,23 +131,31 @@ class WindowMultyQuery(QWidget):
                     time.sleep(0.5)
                     try:
                         street = self.driver.find_element(By.CSS_SELECTOR,
-                                                     '#root > div > div > div._1sf34doj > div._1u4plm2 > div:nth-child(2) > div:nth-child(2) > div > div > div > div > div._jcreqo > div._fjltwx > div > div._3zzdxk > div > div > div > div > div._1b96w9b > div:nth-child(2) > div._t0tx82 > div._8sgdp4 > div > div:nth-child(1) > div._49kxlr > div > div:nth-child(2) > div:nth-child(1)').text
+                                                     '#root > div > div > div._1sf34doj > div._1u4plm2 > div:nth-child(3) > div:nth-child(2) > div > div > div > div > div._jcreqo > div._fjltwx > div > div._3zzdxk > div > div > div > div > div._1b96w9b > div:nth-child(2) > div._t0tx82 > div._8sgdp4 > div > div:nth-child(1) > div._49kxlr > div > div:nth-child(2) > div:nth-child(1) > span').text
                     except:
-                        street = "-"
+                        try:
+                            street = self.driver.find_element(By.CSS_SELECTOR,'#root > div > div > div._1sf34doj > div._1u4plm2 > div:nth-child(3) > div:nth-child(2) > div > div > div > div > div._jcreqo > div._fjltwx > div > div._3zzdxk > div > div > div > div > div._1tfwnxl > div._1dbpexg').text
+                        except:
+                            street = "-"
                     print(('ddd'))
                     try:
-                        descr = self.driver.find_element(By.CLASS_NAME, '_1p8iqzw').text
+                        descr = self.driver.find_element(By.CSS_SELECTOR, '#root > div > div > div._1sf34doj > div._1u4plm2 > div:nth-child(3) > div:nth-child(2) > div > div > div > div > div._jcreqo > div._fjltwx > div > div._3zzdxk > div > div > div > div > div._1b96w9b > div:nth-child(2) > div._t0tx82 > div._8sgdp4 > div > div:nth-child(1) > div._49kxlr > div > div:nth-child(2) > div:nth-child(1) > div').text
                     except:
-                        descr = "-"
+                        try:
+                            descr = self.driver.find_element(By.CSS_SELECTOR, '#root > div > div > div._1sf34doj > div._1u4plm2 > div:nth-child(3) > div:nth-child(2) > div > div > div > div > div._jcreqo > div._fjltwx > div > div._3zzdxk > div > div > div > div > div._1tfwnxl > div:nth-child(5) > span').text
+                        except:
+                            descr = '-'
+
+
 
                     try:
                         stars = self.driver.find_element(By.CSS_SELECTOR,
-                                                    '#root > div > div > div._1sf34doj > div._1u4plm2 > div:nth-child(2) > div:nth-child(2) > div > div > div > div > div._jcreqo > div._fjltwx > div > div._3zzdxk > div > div > div > div > div._1tfwnxl > div._146hbp5 > div > div._y10azs').text
+                                                    '#root > div > div > div._1sf34doj > div._1u4plm2 > div:nth-child(3) > div:nth-child(2) > div > div > div > div > div._jcreqo > div._fjltwx > div > div._3zzdxk > div > div > div > div > div._1tfwnxl > div._146hbp5 > div > div._y10azs').text
                     except:
                         stars = '-'
                     try:
                         count_voices = self.driver.find_element(By.CSS_SELECTOR,
-                                                           '#root > div > div > div._1sf34doj > div._1u4plm2 > div:nth-child(2) > div:nth-child(2) > div > div > div > div > div._jcreqo > div._fjltwx > div > div._3zzdxk > div > div > div > div > div._1tfwnxl > div._146hbp5 > div > div._jspzdm').text
+                                                           '#root > div > div > div._1sf34doj > div._1u4plm2 > div:nth-child(3) > div:nth-child(2) > div > div > div > div > div._jcreqo > div._fjltwx > div > div._3zzdxk > div > div > div > div > div._1tfwnxl > div._146hbp5 > div > div._jspzdm').text
                     except:
                         count_voices = '-'
 
@@ -195,15 +203,20 @@ class WindowMultyQuery(QWidget):
             if i < count_pages:
                 scroll_elements.click()
 
-                print('page= ', i)
+
             else:
                 pass
             i += 1
+            print('page= ', i)
+
 
             df = pd.DataFrame({'name': points, 'type': type_arr, 'descr': geos, 'ulitsa': ulitsa, 'stars': arr_stars,
                                'count_voices': arr_voices, 'lat': arr_lat, 'long': arr_long, 'url': arr_urls})
+            print('сформирован DF')
+            # print(df)
             df.to_csv(self.save_path_textedit.text(), sep=';',
                       encoding='utf8', index=False)
+            print('df сохранён')
 
 
             self.count_queries -= j
@@ -269,6 +282,7 @@ class WindowMultyQuery(QWidget):
         self.open_browser_spinbox.setAlignment(Qt.AlignmentFlag.AlignRight)
 
         self.open_browser_spinbox.setMinimum(2)
+        self.open_browser_spinbox.setMaximum(1000)
         # button_group.addButton(self.open_browser_lineEdit)
         self.main_h_box.addWidget(self.open_browser_spinbox)
         self.back_h_box.addWidget(self.back_button)

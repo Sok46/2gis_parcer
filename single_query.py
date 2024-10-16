@@ -15,7 +15,7 @@ import time
 import pandas as pd
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from multy_query import WindowMultyQuery
+
 from add_pass_to_base import BasePassParcer
 
 import win32con
@@ -51,12 +51,7 @@ class WindowSingleQuery(QWidget):
         self.setUpMainWindow()
         self.show()
 
-    def show_window_2(self):
-        self.close()
-        # if self.driver:
-        #     self.driver.close()
-        self.w = WindowMultyQuery(self.count_queries)
-        self.w.show()
+
 
 
     def checkboxClicked(self, button):
@@ -69,9 +64,9 @@ class WindowSingleQuery(QWidget):
         chrome_options.add_experimental_option("detach", True)
 
         self.driver = webdriver.Chrome(options=chrome_options)
-        self.driver.minimize_window()
+        # self.driver.minimize_window()
         url = 'https://2gis.ru/moscow/search/Шины'
-        self.link_url.setReadOnly(True)
+        # self.link_url.setReadOnly(True)
 
 
         self.driver.get(url)
@@ -81,7 +76,7 @@ class WindowSingleQuery(QWidget):
         # print("selenium handle", self.driver.execute_script("return window.name"))
         self.parce_button.setEnabled(True)
         self.browser_button.setEnabled(False)
-        win32gui.EnumWindows(self._enumWindows, None)
+        # win32gui.EnumWindows(self._enumWindows, None)
 
 
         # self.main_v_box.removeWidget(self.save_button)
@@ -158,15 +153,15 @@ class WindowSingleQuery(QWidget):
                 item = 'error'
             return item
 
-        name = find_item('class', '_tvxwjf')
+        name = find_item('class', '_cwjbox')
         type_item = find_item('class', '_1idnaau')
         street = find_item('css',
-                           '#root > div > div > div._1sf34doj > div._1u4plm2 > div:nth-child(2) > div:nth-child(2) > div > div > div > div > div._jcreqo > div._fjltwx > div > div._3zzdxk > div > div > div > div > div._1b96w9b > div:nth-child(2) > div._t0tx82 > div._8sgdp4 > div > div:nth-child(1) > div._49kxlr > div > div:nth-child(2) > div:nth-child(1)')
-        descr = find_item('class', '_1p8iqzw')
+                           '#root > div > div > div._1sf34doj > div._1u4plm2 > div:nth-child(3) > div:nth-child(2) > div > div > div > div > div._jcreqo > div._fjltwx > div > div._3zzdxk > div > div > div > div > div._1b96w9b > div:nth-child(2) > div._t0tx82 > div._8sgdp4 > div > div:nth-child(1) > div._49kxlr > div > div:nth-child(2) > div:nth-child(1) > span')
+        descr = find_item('css', '#root > div > div > div._1sf34doj > div._1u4plm2 > div:nth-child(3) > div:nth-child(2) > div > div > div > div > div._jcreqo > div._fjltwx > div > div._3zzdxk > div > div > div > div > div._1b96w9b > div:nth-child(2) > div._t0tx82 > div._8sgdp4 > div > div:nth-child(1) > div._49kxlr > div > div:nth-child(2) > div:nth-child(1) > div')
         stars = find_item('css',
-                          '#root > div > div > div._1sf34doj > div._1u4plm2 > div:nth-child(2) > div:nth-child(2) > div > div > div > div > div._jcreqo > div._fjltwx > div > div._3zzdxk > div > div > div > div > div._1tfwnxl > div._146hbp5 > div > div._y10azs')
+                          '#root > div > div > div._1sf34doj > div._1u4plm2 > div:nth-child(3) > div:nth-child(2) > div > div > div > div > div._jcreqo > div._fjltwx > div > div._3zzdxk > div > div > div > div > div._1tfwnxl > div._146hbp5 > div > div._y10azs')
         count_voices = find_item('css',
-                                 '#root > div > div > div._1sf34doj > div._1u4plm2 > div:nth-child(2) > div:nth-child(2) > div > div > div > div > div._jcreqo > div._fjltwx > div > div._3zzdxk > div > div > div > div > div._1tfwnxl > div._146hbp5 > div > div._jspzdm')
+                                 '#root > div > div > div._1sf34doj > div._1u4plm2 > div:nth-child(3) > div:nth-child(2) > div > div > div > div > div._jcreqo > div._fjltwx > div > div._3zzdxk > div > div > div > div > div._1tfwnxl > div._146hbp5 > div > div._jspzdm')
 
         lat_right = str(self.driver.current_url).split('.')[2].split('&')[0].split('?')[0].split('%')[0]
         # print(lat_right)
@@ -238,6 +233,14 @@ class WindowSingleQuery(QWidget):
         # if self.driver:
         #     self.driver.close()
 
+    def show_window_2(self):
+        from multy_query import WindowMultyQuery
+        self.close()
+        # if self.driver:
+        #     self.driver.close()
+        self.w = WindowMultyQuery(self.count_queries)
+        self.w.show()
+
     def closeEvent(self, event): #Зарезервированный метод на закрытие программы
         reply = QMessageBox.question(
             self,
@@ -249,10 +252,11 @@ class WindowSingleQuery(QWidget):
 
         if reply == QMessageBox.StandardButton.Yes:
             event.accept()  # Если пользователь нажал "Да", закрываем приложение
-            self.close()
 
-            if self.driver:
-                self.driver.close()
+
+            # if self.driver:
+            #     self.driver.close()
+            self.close()
         else:
             event.ignore()
 

@@ -107,7 +107,10 @@ class WindowAuth(QWidget):
 
         self.login_button = QPushButton("Войти")
         button_group.addButton(self.login_button)
-        self.login_button.setEnabled(False)
+        if len(self.login_text.text()) < 4:
+            self.login_button.setEnabled(False)
+        else:
+            self.login_button.setEnabled(True)
         self.main_v_box.addWidget(self.login_button)
 
         self.prog_bar = QProgressBar()
@@ -285,6 +288,7 @@ class ThreadClass(QThread):
 
     def run(self):
         # print(self.index, 'index')
+
         self.button.setEnabled(False)
         self.button.setText("Ожидайте")
         self.label.setText("Загрузка...")

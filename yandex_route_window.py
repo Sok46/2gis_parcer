@@ -175,7 +175,7 @@ class WindowYandexRoute(QWidget):
                             type_route = d['properties']['ThreadMetaData']['type']
                             types.append(type_route)
                             names = []
-                            # print(number,type_route)
+                            print(number,type_route)
                             for k, feature in enumerate(d['features']):
                                 # stop_coor = feature["coordinates"]
                                 # print(stop_coor)
@@ -192,7 +192,7 @@ class WindowYandexRoute(QWidget):
                                     stop_coor = feature["coordinates"]
                                     stop_coors.append(stop_coor)
                                     stop_names.append(feature["name"])
-                            # print(names)
+                            print(names)
 
                             for j, coordinates in enumerate(matching_coordinates):
                                 route = {
@@ -251,7 +251,7 @@ class WindowYandexRoute(QWidget):
                 json.dump(stops_data, output_geojson_file, indent=2, ensure_ascii=False)
             # time.sleep(1)
             # driver.refresh()
-            driver.get_log('browser')
+            # driver.get_log('browser')
 
             print("route save")
 
