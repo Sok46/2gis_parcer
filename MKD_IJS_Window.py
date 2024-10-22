@@ -245,7 +245,7 @@ class WindowGisJkh(QWidget):
         self.w.show()
 
     def parce(self):
-        print(self.cityname_textedit.text())
+        # print(self.cityname_textedit.text())
         folder = self.save_path_textedit.text()
         if not os.path.exists(folder + '\export'):
             os.makedirs(folder + '\export')
@@ -263,10 +263,13 @@ class WindowGisJkh(QWidget):
             df.loc[df['Адрес ОЖФ'].str.contains('^\d'), 'Адрес ОЖФ'] = df['Адрес ОЖФ'].str.slice(8)
             # print(df['Адрес ОЖФ'] )
             # Город, по которому будет выполняться фильтрация
-            if len(self.cityname_textedit.text()) > 2:
+            print("Проверка cityname_textedit")
+            # if self.cityname_textedit and len(self.cityname_textedit.text()) > 2:
+            if self.checked_cities is None:
                 print(self.cityname_textedit.text())
                 city_filter = [f" {self.cityname_textedit.text()}"]
             else:
+                print("cityname_textedit не введён")
                 city_filter = self.checked_cities
 
             for city in city_filter:

@@ -75,17 +75,23 @@ class WindowYandexRoute(QWidget):
         driver.get(url)
         actions = ActionChains(driver)
         time.sleep(3)
-        input_query = driver.find_element(By.XPATH, '//input[@placeholder="Поиск мест и адресов"]')
-        input_query.click()
-        time.sleep(1)
-        input_query.send_keys(Keys.CONTROL + 'a')
-        time.sleep(1)
-        input_query.send_keys(Keys.BACKSPACE)
-        time.sleep(1)
-        actions.send_keys(self.cityname_textedit.text()).perform()
-        time.sleep(1)
-        actions.send_keys(Keys.ENTER).perform()
-        time.sleep(1)
+        try:
+            input_query = driver.find_element(By.XPATH, '//input[@placeholder="Поиск мест и адресов"]')
+            input_query.click()
+            time.sleep(1)
+            input_query.send_keys(Keys.CONTROL + 'a')
+            time.sleep(1)
+            input_query.send_keys(Keys.BACKSPACE)
+            time.sleep(1)
+            actions.send_keys(self.cityname_textedit.text()).perform()
+            time.sleep(1)
+            actions.send_keys(Keys.ENTER).perform()
+            time.sleep(1)
+        except Exception as e:
+            print(e)
+            print("Вылетела капча")
+            return
+
 
         # df = pd.read_excel(r'C:\Users\sergey.biryukov\Downloads\Shlak\центроиды кем.xlsx', sheet_name='фффф')
         iter_routes = self.routes_textedit.text().split(",")
@@ -130,6 +136,7 @@ class WindowYandexRoute(QWidget):
 
             routes_geoms = []
             stops_geoms = []
+
             for log in filter(log_filter, logs):
                 try:
                     request_id = log["params"]["requestId"]
@@ -228,30 +235,32 @@ class WindowYandexRoute(QWidget):
                                 stops_geoms.append(stops_data)
                     except:
                         pass
+            try:
+                # print(names)
+                geojson_data = {
+                    "type": "FeatureCollection",
+                    "features": routes_geoms
+                }
 
-            # print(names)
-            geojson_data = {
-                "type": "FeatureCollection",
-                "features": routes_geoms
-            }
+                stops_data = {
+                    "type": "FeatureCollection",
+                    "features": stops_geoms
+                }
+                # print(types)
+                output_geojson_path = rf'{self.save_path_textedit.text()}\{types[0]}_{numbers[0]}'
+                print(output_geojson_path)
+                output_stops_geojson_path = rf'{self.save_path_textedit.text()}\{types[0]}_{numbers[0]}'
 
-            stops_data = {
-                "type": "FeatureCollection",
-                "features": stops_geoms
-            }
-            # print(types)
-            output_geojson_path = rf'{self.save_path_textedit.text()}\{types[0]}_{numbers[0]}'
-            print(output_geojson_path)
-            output_stops_geojson_path = rf'{self.save_path_textedit.text()}\{types[0]}_{numbers[0]}'
+                with open(output_geojson_path + ".geojson", 'w', encoding='utf-8') as output_geojson_file:
+                    json.dump(geojson_data, output_geojson_file, indent=2, ensure_ascii=False)
 
-            with open(output_geojson_path + ".geojson", 'w', encoding='utf-8') as output_geojson_file:
-                json.dump(geojson_data, output_geojson_file, indent=2, ensure_ascii=False)
-
-            with open(output_stops_geojson_path + '_stops' + ".geojson", 'w', encoding='utf-8') as output_geojson_file:
-                json.dump(stops_data, output_geojson_file, indent=2, ensure_ascii=False)
-            # time.sleep(1)
-            # driver.refresh()
-            # driver.get_log('browser')
+                with open(output_stops_geojson_path + '_stops' + ".geojson", 'w', encoding='utf-8') as output_geojson_file:
+                    json.dump(stops_data, output_geojson_file, indent=2, ensure_ascii=False)
+                # time.sleep(1)
+                # driver.refresh()
+                # driver.get_log('browser')
+            except:
+                pass
 
             print("route save")
 
