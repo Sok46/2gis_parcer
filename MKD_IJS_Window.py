@@ -267,7 +267,11 @@ class WindowGisJkh(QWidget):
             # if self.cityname_textedit and len(self.cityname_textedit.text()) > 2:
             if self.checked_cities is None:
                 print(self.cityname_textedit.text())
-                city_filter = [f" {self.cityname_textedit.text()}"]
+                if ',' in self.cityname_textedit.text():
+                    city_filter = f" {self.cityname_textedit.text()}".split(',')
+                else:
+                    city_filter = [f" {self.cityname_textedit.text()}"]
+
             else:
                 print("cityname_textedit не введён")
                 city_filter = self.checked_cities
@@ -304,9 +308,6 @@ class WindowGisJkh(QWidget):
 
                 result.to_csv(rf'{folder}\export\ГИС_ЖКХ_{city}.csv', sep=';', encoding='cp1251', header=header,
                               mode='a', index=False)
-
-
-
 
 
     def setUpMainWindow(self):
@@ -369,7 +370,7 @@ class WindowGisJkh(QWidget):
 
 
         self.load_city_layout.addWidget(add_cities_button)
-        self.load_city_layout.addWidget(self.prog_bar)
+        # self.load_city_layout.addWidget(self.prog_bar)
         cityname_label = QLabel("Либо введите название населённого пункта самостоятельно")
         cityname_label.setAlignment(Qt.AlignmentFlag.AlignBottom)
         # self.main_v_box.addWidget(cityname_label)
@@ -383,6 +384,7 @@ class WindowGisJkh(QWidget):
         self.scroll.setLayout(self.load_city_layout)
 
         self.main_v_box.addWidget(self.scroll)
+        self.main_v_box.addWidget(self.prog_bar)
         # self.main_v_box.setEnabled(False)
 
         self.download_city_butt = QPushButton("Выгрузить названия")
@@ -403,9 +405,10 @@ class WindowGisJkh(QWidget):
 
         seach_action.triggered.connect(self.save_file)
         self.back_button.clicked.connect(self.open_main)
-        self.browser_button.clicked.connect(self.parce)
+        # self.browser_button.clicked.connect(self.parce)
+        self.browser_button.clicked.connect(self.start_parce_thread)
 
-        add_cities_button.clicked.connect(self.start_auth_thread)
+        add_cities_button.clicked.connect(self.start_city_thread)
         # add_cities_button.clicked.connect(self.set_cities)
         self.download_city_butt.clicked.connect(self.download_cities)
 
@@ -416,24 +419,34 @@ class WindowGisJkh(QWidget):
         self.save_path_textedit.textChanged.connect(self.change_directory)
 
 
-    def start_auth_thread(self):
+    def start_city_thread(self):
         self.get_selected_regions()
-        self.thread = ThreadClass(self.sheets_urls, self.base_url, self.region_combobox,self.header_label, index=1)
+        self.indx = 1
+        self.thread = ThreadClass(self.sheets_urls, self.base_url, self.region_combobox,self.header_label, index=self.indx)
+        self.thread.any_signal.connect(self.update_progress_bar)
+        self.thread.start()
+    def start_parce_thread(self):
+        self.get_selected_regions()
+        self.indx = 2
+        if self.checked_cities is None:
+            text_cities = self.cityname_textedit.text()
+        else:
+            text_cities = None
+
+        self.thread = ThreadClass(self.sheets_urls, self.base_url, self.region_combobox,self.header_label, index=self.indx, folder = self.save_path_textedit.text(),checked_cities=self.checked_cities, text_cities=text_cities)
         self.thread.any_signal.connect(self.update_progress_bar)
         self.thread.start()
 
-
     def update_progress_bar(self, value):
         self.prog_bar.setValue(value)
-        if self.prog_bar.value() == 100:
+        if self.prog_bar.value() == 100 and self.indx == 1:
             self.set_cities()
         # self.parce_button.clicked.connect(self.parce)
 
 class ThreadClass(QThread):
     any_signal = pyqtSignal(int)  # Signal to communicate progress updates
 
-
-    def __init__(self, urls, base_url, region_combobox, label, parent=None, index=0):
+    def __init__(self, urls, base_url, region_combobox, label, parent=None, index=0, folder = None, checked_cities=None, text_cities = None):
         super(ThreadClass, self).__init__(parent)
         self.index = index
         self.is_running = True
@@ -441,6 +454,81 @@ class ThreadClass(QThread):
         self.base_url = base_url  # Base URL for constructing download links
         self.region_combobox = region_combobox  # Combobox for selecting regions
         self.label = label  # Label to update UI text
+        self.folder = folder
+        self.checked_cities = checked_cities
+        self.text_cities = text_cities
+
+    def parce(self):
+        print(21312)
+        folder = self.folder
+        print(53422)
+        # print(self.cityname_textedit.text())
+        # folder = self.save_path_textedit.text()
+        if not os.path.exists(folder + '\export'):
+            os.makedirs(folder + '\export')
+
+        print(000)
+        for url in self.sheets_urls:
+
+            final_url = self.base_url + urlencode(dict(public_key=url))
+            response = requests.get(final_url)
+            download_url = response.json()['href']
+            df = pd.read_csv(download_url, sep='|')
+
+            # Удаление индекса из начала строки в колонке "address"
+            # df['Адрес ОЖФ'] = df['Адрес ОЖФ'].str.slice(8)
+
+            df.loc[df['Адрес ОЖФ'].str.contains('^\d'), 'Адрес ОЖФ'] = df['Адрес ОЖФ'].str.slice(8)
+            # print(df['Адрес ОЖФ'] )
+            # Город, по которому будет выполняться фильтрация
+            print("Проверка cityname_textedit")
+            # if self.cityname_textedit and len(self.cityname_textedit.text()) > 2:
+            if self.checked_cities is None:
+                print(self.text_cities)
+                if ',' in self.text_cities:
+                    city_filter = f" {self.text_cities}".split(',')
+                else:
+                    city_filter = [f" {self.text_cities}"]
+            else:
+                print("cityname_textedit не введён")
+                city_filter = self.checked_cities
+
+            step_loading = int(80 / len(city_filter))
+            self.progress = 10  # Initial progress percentage
+            self.any_signal.emit(self.progress)
+            for city in city_filter:
+                self.progress += step_loading  # Initial progress percentage
+                self.any_signal.emit(self.progress)
+                print(url)
+                # Фильтрация данных по указанному городу, используя метод str.contains
+                filtered_df = df[df['Адрес ОЖФ'].str.contains(city, na=False)]
+
+                # Группировка и агрегация
+                result = filtered_df.groupby('Адрес ОЖФ').agg(
+                    # address =
+                    total=('Адрес ОЖФ', 'count'),
+                    total_living=('Тип помещения (блока)', lambda x: (x == 'Жилое').sum()),
+                    total_non_living=('Тип помещения (блока)', lambda x: (x == 'Нежилое').sum()),
+                    total_living_area=('Жилая площадь в доме', 'max'),
+                    total_area=('Общая площадь дома', 'max'),
+                    type=('Тип дома', 'first'),
+                    status=('Состояние', 'first'),
+                    state_host=(
+                        'Дом находится в собственности субъекта Российской Федерации и в полном объеме используется в качестве общежития',
+                        'first'),
+                    substate_host=(
+                        'Дом находится в муниципальной собственности и в полном объеме используется в качестве общежития',
+                        'first'),
+                    method=('Способ управления', 'first')
+                ).reset_index()
+
+                # if len(os.listdir(folder+'\export')) == 0:
+                if f'ГИС_ЖКХ_{city}.csv' not in os.listdir(folder + '\export'):
+                    header = True
+                else:
+                    header = False
+                result.to_csv(rf'{folder}\export\ГИС_ЖКХ_{city}.csv', sep=';', encoding='cp1251', header=header,
+                              mode='a', index=False)
     def return_cities(self):
         return self.cities_dict
 
@@ -552,6 +640,9 @@ class ThreadClass(QThread):
 
         if self.index == 1:
             self.get_cities()  # If index is 1, fetch cities
+        elif self.index == 2:
+            print(1234567)
+            self.parce()
 
         self.label.setText("Завершено")  # Update label text upon completion
         progress = 100  # Initial progress value
