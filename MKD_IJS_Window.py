@@ -14,6 +14,8 @@ import yadisk
 import numpy as np
 import bisect
 
+from query_setter import QuerySetter
+
 
 class WindowGisJkh(QWidget):
     def __init__(self,count_queries = 25, id_person = 10):
@@ -23,6 +25,7 @@ class WindowGisJkh(QWidget):
         self.count_queries = int(count_queries)
         self.id_person = id_person
         self.my_base = BasePassParcer()
+        self.cities_dict = {}
 
         tkn = "y0_AgAAAAAGvkyVAAyD3AAAAAESV2AkAABx7BX4XRNEv7zh0HWaFEzZX1T2nA"
         self.y = yadisk.YaDisk(token=tkn)
@@ -97,7 +100,7 @@ class WindowGisJkh(QWidget):
                 self.sheets_urls.append(sheet_url)
     def get_cities(self):
         self.get_selected_regions()
-        self.cities_dict = {}
+
         for url in self.sheets_urls:
             print(url)
             final_url = self.base_url + urlencode(dict(public_key=url))
@@ -203,11 +206,17 @@ class WindowGisJkh(QWidget):
             # self.city_combobox.addItems(unique_cities)
     def download_cities(self):
         cities = []
+        print(cities)
         for header in  self.cities_dict.keys():
             for city in self.cities_dict[header]:
                 cities.append(city)
         df = pd.DataFrame(cities, columns=["города"])
         df.to_csv(self.save_path_textedit.text() + '/cities.csv', index=False, encoding='cp1251')
+        QuerySetter(self.count_queries, self.my_base, self.header_label, len(cities), self.ws, self.id_person, self.sh)
+        # self.count_queries -= len(cities)
+        # print(len(self.cities_dict.keys()))
+        # self.my_base.set_queries(self.ws, int(self.id_person), self.sh, int(self.count_queries))
+        # self.header_label.setText(f"У вас {self.count_queries} запросов")
 
 
 
@@ -441,6 +450,15 @@ class WindowGisJkh(QWidget):
         self.prog_bar.setValue(value)
         if self.prog_bar.value() == 100 and self.indx == 1:
             self.set_cities()
+        if self.prog_bar.value() == 100 and self.indx == 2:
+
+            check_query = QuerySetter().check_query(self.count_queries, 200, self.header_label)
+            if check_query:
+
+                self.count_queries = QuerySetter().set_query(self.count_queries, self.my_base, self.header_label, 200, self.ws, self.id_person, self.sh)
+
+
+
         # self.parce_button.clicked.connect(self.parce)
 
 class ThreadClass(QThread):

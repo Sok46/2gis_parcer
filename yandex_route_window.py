@@ -261,6 +261,9 @@ class WindowYandexRoute(QWidget):
                 # driver.get_log('browser')
             except:
                 pass
+            self.count_queries -= 30
+            self.my_base.set_queries(self.ws, int(self.id_person), self.sh, int(self.count_queries))
+            self.header_label.setText(f"У вас {self.count_queries} запросов")
 
             print("route save")
 
