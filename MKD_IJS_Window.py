@@ -205,14 +205,17 @@ class WindowGisJkh(QWidget):
 
             # self.city_combobox.addItems(unique_cities)
     def download_cities(self):
+
         cities = []
         print(cities)
         for header in  self.cities_dict.keys():
             for city in self.cities_dict[header]:
                 cities.append(city)
-        df = pd.DataFrame(cities, columns=["города"])
-        df.to_csv(self.save_path_textedit.text() + '/cities.csv', index=False, encoding='cp1251')
-        QuerySetter(self.count_queries, self.my_base, self.header_label, len(cities), self.ws, self.id_person, self.sh)
+        check_query = QuerySetter().check_query(self.count_queries, len(cities), self.header_label)
+        if check_query:
+            df = pd.DataFrame(cities, columns=["города"])
+            df.to_csv(self.save_path_textedit.text() + '/cities.csv', index=False, encoding='cp1251')
+            self.count_queries = QuerySetter().set_query(self.count_queries, self.my_base, self.header_label, len(cities), self.ws, self.id_person, self.sh)
         # self.count_queries -= len(cities)
         # print(len(self.cities_dict.keys()))
         # self.my_base.set_queries(self.ws, int(self.id_person), self.sh, int(self.count_queries))
@@ -435,27 +438,26 @@ class WindowGisJkh(QWidget):
         self.thread.any_signal.connect(self.update_progress_bar)
         self.thread.start()
     def start_parce_thread(self):
-        self.get_selected_regions()
-        self.indx = 2
-        if self.checked_cities is None:
-            text_cities = self.cityname_textedit.text()
-        else:
-            text_cities = None
+        check_query = QuerySetter().check_query(self.count_queries, 200, self.header_label)
+        if check_query:
+            self.get_selected_regions()
+            self.indx = 2
+            if self.checked_cities is None:
+                text_cities = self.cityname_textedit.text()
+            else:
+                text_cities = None
 
-        self.thread = ThreadClass(self.sheets_urls, self.base_url, self.region_combobox,self.header_label, index=self.indx, folder = self.save_path_textedit.text(),checked_cities=self.checked_cities, text_cities=text_cities)
-        self.thread.any_signal.connect(self.update_progress_bar)
-        self.thread.start()
+            self.thread = ThreadClass(self.sheets_urls, self.base_url, self.region_combobox,self.header_label, index=self.indx, folder = self.save_path_textedit.text(),checked_cities=self.checked_cities, text_cities=text_cities)
+            self.thread.any_signal.connect(self.update_progress_bar)
+            self.thread.start()
 
     def update_progress_bar(self, value):
         self.prog_bar.setValue(value)
         if self.prog_bar.value() == 100 and self.indx == 1:
             self.set_cities()
-        if self.prog_bar.value() == 100 and self.indx == 2:
+        if self.prog_bar.value() > 80 and self.indx == 2:
 
-            check_query = QuerySetter().check_query(self.count_queries, 200, self.header_label)
-            if check_query:
-
-                self.count_queries = QuerySetter().set_query(self.count_queries, self.my_base, self.header_label, 200, self.ws, self.id_person, self.sh)
+            self.count_queries = QuerySetter().set_query(self.count_queries, self.my_base, self.header_label, 200, self.ws, self.id_person, self.sh)
 
 
 
@@ -662,7 +664,7 @@ class ThreadClass(QThread):
             print(1234567)
             self.parce()
 
-        self.label.setText("Завершено")  # Update label text upon completion
+        # self.label.setText("Завершено")  # Update label text upon completion
         progress = 100  # Initial progress value
         self.any_signal.emit(progress)
 

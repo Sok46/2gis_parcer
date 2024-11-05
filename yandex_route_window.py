@@ -14,6 +14,8 @@ from gspread import Client, Spreadsheet
 from add_pass_to_base import BasePassParcer
 import json
 
+from query_setter import QuerySetter
+
 class WindowYandexRoute(QWidget):
     def __init__(self,count_queries = 25, id_person = 10):
         super().__init__()
@@ -63,209 +65,214 @@ class WindowYandexRoute(QWidget):
         self.w.show()
 
     def parce(self):
-        url = 'https://yandex.ru/maps/11310/minusinsk/?ll=91.696668%2C53.700875&z=12.63'
+        check_query = QuerySetter().check_query(self.count_queries, 30, self.header_label)
+        if check_query:
+            url = 'https://yandex.ru/maps/11310/minusinsk/?ll=91.696668%2C53.700875&z=12.63'
 
-        # make chrome log requests
-        capabilities = DesiredCapabilities.CHROME
-        options = webdriver.ChromeOptions()
-        options.set_capability(
-            "goog:loggingPrefs", {"performance": "ALL", 'browser': 'ALL'}
-        )
-        driver = webdriver.Chrome(options=options)
-        driver.get(url)
-        actions = ActionChains(driver)
-        time.sleep(3)
-        try:
-            input_query = driver.find_element(By.XPATH, '//input[@placeholder="Поиск мест и адресов"]')
-            input_query.click()
-            time.sleep(1)
-            input_query.send_keys(Keys.CONTROL + 'a')
-            time.sleep(1)
-            input_query.send_keys(Keys.BACKSPACE)
-            time.sleep(1)
-            actions.send_keys(self.cityname_textedit.text()).perform()
-            time.sleep(1)
-            actions.send_keys(Keys.ENTER).perform()
-            time.sleep(1)
-        except Exception as e:
-            print(e)
-            print("Вылетела капча")
-            return
-
-
-        # df = pd.read_excel(r'C:\Users\sergey.biryukov\Downloads\Shlak\центроиды кем.xlsx', sheet_name='фффф')
-        iter_routes = self.routes_textedit.text().split(",")
-        print(iter_routes)
-        for index, row in enumerate(iter_routes):
-            if len(row)<7:
-                row = "Маршрут " + row
-            routes_feats = []
-            index_feats = []
+            # make chrome log requests
+            capabilities = DesiredCapabilities.CHROME
+            options = webdriver.ChromeOptions()
+            options.set_capability(
+                "goog:loggingPrefs", {"performance": "ALL", 'browser': 'ALL'}
+            )
+            driver = webdriver.Chrome(options=options)
+            driver.get(url)
+            actions = ActionChains(driver)
+            time.sleep(3)
+            try:
+                input_query = driver.find_element(By.XPATH, '//input[@placeholder="Поиск мест и адресов"]')
+                input_query.click()
+                time.sleep(1)
+                input_query.send_keys(Keys.CONTROL + 'a')
+                time.sleep(1)
+                input_query.send_keys(Keys.BACKSPACE)
+                time.sleep(1)
+                actions.send_keys(self.cityname_textedit.text()).perform()
+                time.sleep(1)
+                actions.send_keys(Keys.ENTER).perform()
+                time.sleep(1)
+            except Exception as e:
+                print(e)
+                print("Вылетела капча")
+                return
 
 
-            input_query.click()
-            time.sleep(1)
-            input_query.send_keys(Keys.CONTROL + 'a')
-            time.sleep(1)
-            input_query.send_keys(Keys.BACKSPACE)
-            time.sleep(1)
-            actions.send_keys(row).perform()
-            time.sleep(1)
-            actions.send_keys(Keys.ENTER).perform()
+            # df = pd.read_excel(r'C:\Users\sergey.biryukov\Downloads\Shlak\центроиды кем.xlsx', sheet_name='фффф')
+            iter_routes = self.routes_textedit.text().split(",")
+            print(iter_routes)
+            for index, row in enumerate(iter_routes):
+                if len(row)<7:
+                    row = "Маршрут " + row
+                routes_feats = []
+                index_feats = []
 
-            # time.sleep(3)
 
-            # actions.send_keys("Минусинск маршрут 11").perform()
-            # actions.send_keys(Keys.ENTER).perform()
-            time.sleep(6)
-            # # driver.refresh()
-            # time.sleep(2)
-            # logs_func(driver,routes_feats,index_feats)
-            logs_raw = driver.get_log("performance")
-            logs = [json.loads(lr["message"])["message"] for lr in logs_raw]
+                input_query.click()
+                time.sleep(1)
+                input_query.send_keys(Keys.CONTROL + 'a')
+                time.sleep(1)
+                input_query.send_keys(Keys.BACKSPACE)
+                time.sleep(1)
+                actions.send_keys(row).perform()
+                time.sleep(1)
+                actions.send_keys(Keys.ENTER).perform()
 
-            # print(logs, '\n stop logs \n')
+                # time.sleep(3)
 
-            def log_filter(log_):
-                return (
-                    # is an actual response
-                        log_["method"] == "Network.responseReceived"
-                        # and json
-                        and "json" in log_["params"]["response"]["mimeType"]
-                )
+                # actions.send_keys("Минусинск маршрут 11").perform()
+                # actions.send_keys(Keys.ENTER).perform()
+                time.sleep(6)
+                # # driver.refresh()
+                # time.sleep(2)
+                # logs_func(driver,routes_feats,index_feats)
+                logs_raw = driver.get_log("performance")
+                logs = [json.loads(lr["message"])["message"] for lr in logs_raw]
 
-            routes_geoms = []
-            stops_geoms = []
+                # print(logs, '\n stop logs \n')
 
-            for log in filter(log_filter, logs):
+                def log_filter(log_):
+                    return (
+                        # is an actual response
+                            log_["method"] == "Network.responseReceived"
+                            # and json
+                            and "json" in log_["params"]["response"]["mimeType"]
+                    )
+
+                routes_geoms = []
+                stops_geoms = []
+
+                for log in filter(log_filter, logs):
+                    try:
+                        request_id = log["params"]["requestId"]
+                        resp_url = log["params"]["response"]["url"]
+                        resp_qq = log["params"]["response"]
+
+                        # print(f"Caught {resp_url}", '\n stop \n')
+                        # print('\n start driver \n ',driver.execute_cdp_cmd("Network.getResponseBody", {"requestId": request_id}), '\n end driver \n')
+                        l = (driver.execute_cdp_cmd("Network.getResponseBody", {"requestId": request_id}))
+                        # print(l)
+                        routes_feats.append(l)
+                    except:
+                        pass
+
+                    stop_coors = []
+                    stop_names = []
+
+                    matching_coordinates = []
+                    types = []
+                    numbers = []
+
+                    ThreadMetaData = []
+
+                    # Подготовка списка для хранения подходящих координат
+                    matching_prop = []
+                    matching_discr = []
+
+                    # Перебираем все fetch/xhr
+                    for i, body in enumerate(routes_feats):
+                        # print(1, body)
+                        try:
+                            data = body['body']
+                            # print(data)
+                            # if i == 1:
+                            json_data_main = json.loads((data))
+                            data = json_data_main['data']['features']
+                            # print(data)
+                            for d in data:
+
+                                number = d['properties']['ThreadMetaData']['name']
+                                numbers.append(number)
+
+                                type_route = d['properties']['ThreadMetaData']['type']
+                                types.append(type_route)
+                                names = []
+                                print(number,type_route)
+                                for k, feature in enumerate(d['features']):
+                                    # stop_coor = feature["coordinates"]
+                                    # print(stop_coor)
+                                    # print(feature)
+                                    name = feature.get("name")
+                                    # print(name, k)
+                                    names.append(name)
+                                    if "points" in feature:
+                                        points = feature["points"]
+                                        # print(points)
+                                        matching_coordinates.append(points)
+                                        # name = feature["id"]
+                                    if "coordinates" in feature:
+                                        stop_coor = feature["coordinates"]
+                                        stop_coors.append(stop_coor)
+                                        stop_names.append(feature["name"])
+                                print(names)
+
+                                for j, coordinates in enumerate(matching_coordinates):
+                                    route = {
+                                        "type": "Feature",
+                                        "geometry": {
+                                            "type": "LineString",
+                                            "coordinates": coordinates
+                                        },
+                                        "properties": {
+                                            "out": names[0],
+                                            'in': names[-1],
+                                            'out_in': str(names[0]) + '-' + str(names[-1]),
+                                            "type": types[0],
+                                            "route": numbers[0],
+                                        }
+                                    }
+                                    routes_geoms.append(route)
+                                for i, coordinates in enumerate(stop_coors):
+                                    stops_data = {
+                                        "type": "Feature",
+                                        "geometry": {
+                                            "type": "Point",
+                                            "coordinates": coordinates
+                                        },
+                                        "properties": {
+                                            "out": stop_names[i],
+                                            #     'in': names[-1],
+                                            #     'out_in': str(names[0]) + '-' + str(names[-1])
+                                        }
+                                    }
+
+                                    # if len(route_data) > 0:
+                                    stops_geoms.append(stops_data)
+                        except:
+                            pass
                 try:
-                    request_id = log["params"]["requestId"]
-                    resp_url = log["params"]["response"]["url"]
-                    resp_qq = log["params"]["response"]
+                    # print(names)
+                    geojson_data = {
+                        "type": "FeatureCollection",
+                        "features": routes_geoms
+                    }
 
-                    # print(f"Caught {resp_url}", '\n stop \n')
-                    # print('\n start driver \n ',driver.execute_cdp_cmd("Network.getResponseBody", {"requestId": request_id}), '\n end driver \n')
-                    l = (driver.execute_cdp_cmd("Network.getResponseBody", {"requestId": request_id}))
-                    # print(l)
-                    routes_feats.append(l)
+                    stops_data = {
+                        "type": "FeatureCollection",
+                        "features": stops_geoms
+                    }
+                    # print(types)
+                    output_geojson_path = rf'{self.save_path_textedit.text()}\{types[0]}_{numbers[0]}'
+                    print(output_geojson_path)
+                    output_stops_geojson_path = rf'{self.save_path_textedit.text()}\{types[0]}_{numbers[0]}'
+
+                    with open(output_geojson_path + ".geojson", 'w', encoding='utf-8') as output_geojson_file:
+                        json.dump(geojson_data, output_geojson_file, indent=2, ensure_ascii=False)
+
+                    with open(output_stops_geojson_path + '_stops' + ".geojson", 'w', encoding='utf-8') as output_geojson_file:
+                        json.dump(stops_data, output_geojson_file, indent=2, ensure_ascii=False)
+                    # time.sleep(1)
+                    # driver.refresh()
+                    # driver.get_log('browser')
                 except:
                     pass
 
-                stop_coors = []
-                stop_names = []
+                # self.count_queries -= 30
+                # self.my_base.set_queries(self.ws, int(self.id_person), self.sh, int(self.count_queries))
+                # self.header_label.setText(f"У вас {self.count_queries} запросов")
+                self.count_queries = QuerySetter().set_query(self.count_queries, self.my_base, self.header_label,
+                                                             30, self.ws, self.id_person, self.sh)
 
-                matching_coordinates = []
-                types = []
-                numbers = []
-
-                ThreadMetaData = []
-
-                # Подготовка списка для хранения подходящих координат
-                matching_prop = []
-                matching_discr = []
-
-                # Перебираем все fetch/xhr
-                for i, body in enumerate(routes_feats):
-                    # print(1, body)
-                    try:
-                        data = body['body']
-                        # print(data)
-                        # if i == 1:
-                        json_data_main = json.loads((data))
-                        data = json_data_main['data']['features']
-                        # print(data)
-                        for d in data:
-
-                            number = d['properties']['ThreadMetaData']['name']
-                            numbers.append(number)
-
-                            type_route = d['properties']['ThreadMetaData']['type']
-                            types.append(type_route)
-                            names = []
-                            print(number,type_route)
-                            for k, feature in enumerate(d['features']):
-                                # stop_coor = feature["coordinates"]
-                                # print(stop_coor)
-                                # print(feature)
-                                name = feature.get("name")
-                                # print(name, k)
-                                names.append(name)
-                                if "points" in feature:
-                                    points = feature["points"]
-                                    # print(points)
-                                    matching_coordinates.append(points)
-                                    # name = feature["id"]
-                                if "coordinates" in feature:
-                                    stop_coor = feature["coordinates"]
-                                    stop_coors.append(stop_coor)
-                                    stop_names.append(feature["name"])
-                            print(names)
-
-                            for j, coordinates in enumerate(matching_coordinates):
-                                route = {
-                                    "type": "Feature",
-                                    "geometry": {
-                                        "type": "LineString",
-                                        "coordinates": coordinates
-                                    },
-                                    "properties": {
-                                        "out": names[0],
-                                        'in': names[-1],
-                                        'out_in': str(names[0]) + '-' + str(names[-1]),
-                                        "type": types[0],
-                                        "route": numbers[0],
-                                    }
-                                }
-                                routes_geoms.append(route)
-                            for i, coordinates in enumerate(stop_coors):
-                                stops_data = {
-                                    "type": "Feature",
-                                    "geometry": {
-                                        "type": "Point",
-                                        "coordinates": coordinates
-                                    },
-                                    "properties": {
-                                        "out": stop_names[i],
-                                        #     'in': names[-1],
-                                        #     'out_in': str(names[0]) + '-' + str(names[-1])
-                                    }
-                                }
-
-                                # if len(route_data) > 0:
-                                stops_geoms.append(stops_data)
-                    except:
-                        pass
-            try:
-                # print(names)
-                geojson_data = {
-                    "type": "FeatureCollection",
-                    "features": routes_geoms
-                }
-
-                stops_data = {
-                    "type": "FeatureCollection",
-                    "features": stops_geoms
-                }
-                # print(types)
-                output_geojson_path = rf'{self.save_path_textedit.text()}\{types[0]}_{numbers[0]}'
-                print(output_geojson_path)
-                output_stops_geojson_path = rf'{self.save_path_textedit.text()}\{types[0]}_{numbers[0]}'
-
-                with open(output_geojson_path + ".geojson", 'w', encoding='utf-8') as output_geojson_file:
-                    json.dump(geojson_data, output_geojson_file, indent=2, ensure_ascii=False)
-
-                with open(output_stops_geojson_path + '_stops' + ".geojson", 'w', encoding='utf-8') as output_geojson_file:
-                    json.dump(stops_data, output_geojson_file, indent=2, ensure_ascii=False)
-                # time.sleep(1)
-                # driver.refresh()
-                # driver.get_log('browser')
-            except:
-                pass
-            self.count_queries -= 30
-            self.my_base.set_queries(self.ws, int(self.id_person), self.sh, int(self.count_queries))
-            self.header_label.setText(f"У вас {self.count_queries} запросов")
-
-            print("route save")
+                print("route save")
 
 
 

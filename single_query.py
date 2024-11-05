@@ -17,9 +17,10 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 
 from add_pass_to_base import BasePassParcer
+from query_setter import QuerySetter
 
-import win32con
-import win32gui
+# import win32con
+# import win32gui
 
 
 
@@ -81,39 +82,39 @@ class WindowSingleQuery(QWidget):
 
         # self.main_v_box.removeWidget(self.save_button)
         # self.main_v_box.removeWidget(self.browser_button)
-    def _enumWindows(self, hwnd, _):
-        # if hwnd == self.myhwnd:
-        #     return
-        if win32gui.IsWindow(hwnd) and win32gui.IsWindowVisible(hwnd) and win32gui.IsWindowEnabled(hwnd):
-            phwnd = win32gui.GetParent(hwnd)
-            title = win32gui.GetWindowText(hwnd)
-            name = win32gui.GetClassName(hwnd)
-            # GetDoubleClickTime = win32gui.GetDoubleClickTime(hwnd)
-
-            if 'Шины в Москве' in title:
-                print('{0}|{1}|\tЗаголовок：{2}\t|\Класс: {3}'.format(hwnd, phwnd, title, name))
-                # my_window = hwnd
-                my_window, phwnd = hwnd, phwnd
-                # self.windowList.append(
-                #     '{0}|{1}|\tЗаголовок：{2}\t|\Класс: {3}'.format(hwnd, phwnd, title, name))
-
-                style = win32gui.GetWindowLong(my_window, win32con.GWL_STYLE)
-                exstyle = win32gui.GetWindowLong(my_window, win32con.GWL_EXSTYLE)
-                # print('save', my_window, style, exstyle)
-
-                widget = QWidget.createWindowContainer(QWindow.fromWinId(my_window))
-                widget.setMinimumSize(1200,700)
-                # widget.setFixedHeight(400)
-                # widget.setFixedWidth(800)
-                # widget.setWidgetResizable(True)
-                widget.my_window = my_window
-                widget.phwnd = phwnd
-                widget.style = style
-                widget.exstyle = exstyle
-                widget.setParent(self)
-                # layout = QVBoxLayout()
-                # layout.addWidget(widget)
-                self.main_h_box.addWidget(widget)
+    # def _enumWindows(self, hwnd, _):
+    #     # if hwnd == self.myhwnd:
+    #     #     return
+    #     if win32gui.IsWindow(hwnd) and win32gui.IsWindowVisible(hwnd) and win32gui.IsWindowEnabled(hwnd):
+    #         phwnd = win32gui.GetParent(hwnd)
+    #         title = win32gui.GetWindowText(hwnd)
+    #         name = win32gui.GetClassName(hwnd)
+    #         # GetDoubleClickTime = win32gui.GetDoubleClickTime(hwnd)
+    #
+    #         if 'Шины в Москве' in title:
+    #             print('{0}|{1}|\tЗаголовок：{2}\t|\Класс: {3}'.format(hwnd, phwnd, title, name))
+    #             # my_window = hwnd
+    #             my_window, phwnd = hwnd, phwnd
+    #             # self.windowList.append(
+    #             #     '{0}|{1}|\tЗаголовок：{2}\t|\Класс: {3}'.format(hwnd, phwnd, title, name))
+    #
+    #             style = win32gui.GetWindowLong(my_window, win32con.GWL_STYLE)
+    #             exstyle = win32gui.GetWindowLong(my_window, win32con.GWL_EXSTYLE)
+    #             # print('save', my_window, style, exstyle)
+    #
+    #             widget = QWidget.createWindowContainer(QWindow.fromWinId(my_window))
+    #             widget.setMinimumSize(1200,700)
+    #             # widget.setFixedHeight(400)
+    #             # widget.setFixedWidth(800)
+    #             # widget.setWidgetResizable(True)
+    #             widget.my_window = my_window
+    #             widget.phwnd = phwnd
+    #             widget.style = style
+    #             widget.exstyle = exstyle
+    #             widget.setParent(self)
+    #             # layout = QVBoxLayout()
+    #             # layout.addWidget(widget)
+    #             self.main_h_box.addWidget(widget)
 
     def stopDriver(self):
         self.driver.quit()

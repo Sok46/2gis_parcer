@@ -12,6 +12,8 @@ import gspread
 from gspread import Client, Spreadsheet
 from add_pass_to_base import BasePassParcer
 
+from query_setter import QuerySetter
+
 class WindowMultyQuery(QWidget):
     def __init__(self,count_queries = 250, id_person = 10):
         super().__init__()
@@ -159,18 +161,6 @@ class WindowMultyQuery(QWidget):
                     except:
                         count_voices = '-'
 
-
-
-                    # long_right = str(self.driver.current_url).split('.')[3].split('&')[0].split('?')[0].split('%')[0]
-                    # long_left = str(self.driver.current_url).split('.')[2][-2:]
-                    #
-                    # long = str(long_left) + '.' + str(long_right)
-                    #
-                    # lat_left = str(self.driver.current_url).split('.')[3].split('=')[1]
-                    #
-                    # lat_right = str(self.driver.current_url).split('.')[4].split('%')[0]
-                    #
-                    # lat = str(lat_left) + '.' + str(lat_right)
 
                     lat_right = str(self.driver.current_url).split('.')[2].split('&')[0].split('?')[0].split('%')[0]
                     # print(lat_right)
