@@ -69,18 +69,18 @@ class NarodWidget(MyWidget):
         if self.check_auth_file():
             print('check_auth_file')
             self.load_cookies(self.driver)
+
+            self.start_timer()
         # if 'где каждый делает карты точнее' in str(self.driver.page_source):
         else:
             self.auth_yandex()
-            print(121231312)
 
 
         # sleep(10)
         # self.load_cookies(self.driver)
         #
         #
-        self.timer.start()
-        self.timer_2.start()
+
 
     def parse(self):
         filter_log.filter_log.logs_func(filter_log, self.driver, self.logi, self.excel_df, self.index_features)
@@ -92,6 +92,9 @@ class NarodWidget(MyWidget):
     def yet_another_widgets(self):
         self.sec_label = QLabel('0', self)
         self.main_v_box.insertWidget(1, self.sec_label)
+    def start_timer(self):
+        self.timer.start()
+        self.timer_2.start()
 
     def auth_yandex(self):
         self.sec_label.setText("Авторизуйтесь!")
@@ -105,39 +108,16 @@ class NarodWidget(MyWidget):
         else:
             return False
 
-        # #Autorization
-        # sleep(2)
-        # ent_but = driver.find_element(By.XPATH,'/html/body/div/div[1]/div/div[2]/a/span')
-        # self.actions.click(ent_but).perform()
-        # sleep(1)
-        # login_field = driver.find_element(By.XPATH,'//*[@id="passp-field-login"]')
-        # sleep(1)
-        # login_field.clear()
-        # sleep(2)
-        # login_field.send_keys("Doshirag2@yandex.ru")
-        # login_field.send_keys(Keys.ENTER)
-        #
-        # sleep(3)
-        # pass_input = driver.find_element(By.XPATH,'//*[@id="passp-field-passwd"]')
-        # pass_input.clear()
-        # sleep(2)
-        # pass_input.send_keys("1124561luk")
-        # sleep(2)
-        # pass_input.send_keys(Keys.ENTER)
-        # sleep(25)
     def save_auth(self):
-        pickle.dump(self.driver.get_cookies(),open(f"yandex_cookies", "wb"))
+
         try:
             self.main_v_box.removeWidget(self.auth_butt)
             self.auth_butt.deleteLater()
             self.sec_label.setText("0")
         except:
             pass
-
-
-
-
-
+        pickle.dump(self.driver.get_cookies(), open(f"yandex_cookies", "wb"))
+        self.start_timer()
 
     def load_cookies(self,driver):
         for cookie in pickle.load(open(f"yandex_cookies", "rb")):
@@ -151,146 +131,52 @@ class NarodWidget(MyWidget):
         self.timer.timeout.connect(self.update_counter)
         self.timer_2.timeout.connect(self.parse)
 
+class ThreadClass(QThread):
+    any_signal = pyqtSignal(int)
+    accept_signal = pyqtSignal(int)
 
-        # # def logs_func(self, driver, logi, excel_df, index_features):
+    def __init__(self, driver, logi, excel_df, index_features, parent=None, index = 0):
+        super(ThreadClass, self).__init__(parent)
+        self.index = index
+        self.is_running = True
+        self.password = password
+        self.button = button
+        self.user_name = user_name.text()
+        self.label = label
+
+        self.google_sheet_url = 'https://docs.google.com/spreadsheets/d/1qsd5c5wDWo6YlGu-5SX-Ga8G7E-8XaE20KgMAVDYMD4/edit?gid=0#gid=0'
+        gc: Client = gspread.service_account("./etc/google_service_account.json")
+        sh: Spreadsheet = gc.open_by_url(self.google_sheet_url)
+        self.ws = sh.sheet1
+
+    def parse(self):
+        filter_log.filter_log.logs_func(filter_log, self.driver, self.logi, self.excel_df, self.index_features)
+
+
+
+    def run(self):
+        # print(self.index, 'index')
+
+        self.button.setEnabled(False)
+        self.button.setText("Ожидайте")
+        self.label.setText("Загрузка...")
         #
-        # logs_raw = driver.get_log("performance")
-        # logs = [json.loads(lr["message"])["message"] for lr in logs_raw]
-        #
-        # # print(logs, '\n stop logs \n')
-        #
-        # def log_filter(log_):
-        #     return (
-        #         # is an actual response
-        #             log_["method"] == "Network.responseReceived"
-        #             # and json
-        #             and "json" in log_["params"]["response"]["mimeType"]
-        #     )
-        #
-        # for log in filter(log_filter, logs):
-        #
-        #     try:
-        #         request_id = log["params"]["requestId"]
-        #         resp_url = log["params"]["response"]["url"]
-        #         resp_qq = log["params"]["response"]
-        #
-        #         # print(f"Caught {resp_url}", '\n stop \n')
-        #         # print('\n start driver \n ',driver.execute_cdp_cmd("Network.getResponseBody", {"requestId": request_id}), '\n end driver \n')
-        #         l = (driver.execute_cdp_cmd("Network.getResponseBody", {"requestId": request_id}))
-        #         logi.append(l)
-        #     except:
-        #         pass
-        # bodyes = []
-        # # matching_coordinates = []
-        # ThreadMetaData = []
-        #
-        # features_list = []
-        # stops = {
-        #     "type": "FeatureCollection",
-        #     "features": []
-        # }
-        #
-        # # Перебираем все fetch/xhr
-        # for i, body in enumerate(logi):
-        #     try:
-        #         data = body['body']
-        #         # if i == 1:
-        #         json_data = json.loads((data))
-        #         # print("\n",json_data,"\n")
-        #         # print(f'\n ', json_data["data"]['features'], '\n')
-        #         # print(f'\n body{i}')
-        #         bodyes.append(json_data["data"][-1])
-        #         # for lst in json_data['data']:
-        #         #     print(lst, "\n")
-        #
-        #     except:
-        #         pass
-        # geojson_data = {
-        #     "type": "FeatureCollection",
-        #     "features": []
-        # }
-        #
-        # matching_prop = []
-        # matching_coordinates = []
-        # id_obj = []
-        # name_obj = []
-        # # print(bodyes)
-        # for last_body_item in bodyes:
-        #     try:
-        #         # if last_body_item['data']['features']:
-        #         # print(last_body_item['data'])
-        #         many_features = last_body_item['data']['features']
-        #         for feature in many_features:
-        #             # feature = features.split("RenderedGeometry")
-        #             properties = feature['properties']
-        #             prop = properties["hintContent"]
-        #             g_obj = properties['geoObject']['geometry']
-        #             id = properties['geoObject']['id']
-        #             if "(" in prop:
-        #                 name = prop.split("(")[0]
-        #                 prop = prop.split("(")[1]
-        #
-        #                 # prop = excel_df.loc[excel_df['prop'] == prop, 'new_name'].values
-        #             else:
-        #                 name = "-"
-        #             # Пример использования объединенных данных
-        #             for index, row in excel_df.iterrows():
-        #                 prop_xlsx = row['prop']
-        #                 new_xlsx = row['new_name']
-        #                 if prop_xlsx in prop:
-        #                     prop = prop.replace(prop, new_xlsx)
-        #             # print("prop:",prop_match)
-        #
-        #             id_obj.append(id)
-        #             name_obj.append(name)
-        #             matching_prop.append(prop)
-        #             matching_coordinates.append(g_obj)
-        #
-        #             # print("\n", "g_obj:",g_obj, "\n")
-        #
-        #         # print("\n", route_features, "\n")
-        #     except:
-        #         pass
-        # # print()
-        #
-        # if len(id_obj) != 0:
-        #     # print("id_obj",id_obj)
-        #     #     index_features.append(0)
-        #     # else:
-        #     index_features.append(set(id_obj))
-        #
-        # features = []
-        # for i in range(len(matching_coordinates)):
-        #     feature = {
-        #         "type": "Feature",
-        #         # "properties:"
-        #         "id": id_obj[i],
-        #         "name": name_obj[i],
-        #         "category": matching_prop[i],
-        #
-        #         "geometry": matching_coordinates[i]
-        #     }
-        #     # unique_feature =  dict.fromkeys(feature).keys()
-        #     features.append(feature)
-        #     # index_features.append(len(features))
-        # # print("features:",features)
-        # # clear_features = list(set(map(str, features)))
-        #
-        # # print("clear:", features)
-        #
-        # geojson_data = {
-        #     "type": "FeatureCollection",
-        #     # "crs": {
-        #     #     "type": "name",
-        #     #     "properties": {
-        #     #         "name": "urn:ogc:def:crs:EPSG::3395"
-        #     #     }
-        #     # },
-        #     "features": features
-        # }
-        # # geojson_str = json.dumps(geojson_data)
-        # # print(geojson_data)
-        # return geojson_data
+        # from add_pass_to_base import BasePassParcer
+        cnt = 10
+        self.any_signal.emit(cnt)
+        # pass_base = BasePassParcer.verify_person(self, self.ws, self.user_name)
+        if self.index == 1:
+            self.checkAutorization()
+
+        elif self.index == 2:
+            self.easy_enter()
+
+
+    def stop(self):
+        self.is_running = False
+        self.terminate()
+
+
 
 
 if __name__ == '__main__':
