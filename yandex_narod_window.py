@@ -50,6 +50,7 @@ class NarodWidget(MyWidget):
         self.index_features = []
         self.excel_df = pd.read_excel('./etc/yand_categoty.xlsx')
 
+
     def openBrowser(self):
         # capabilities = DesiredCapabilities.CHROME
         options = webdriver.ChromeOptions()
