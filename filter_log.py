@@ -3,11 +3,13 @@ import json
 
 class filter_log:
     def logs_func(self, driver, logi, excel_df, index_features):
+        print(0)
 
         logs_raw = driver.get_log("performance")
         logs = [json.loads(lr["message"])["message"] for lr in logs_raw]
 
         # print(logs, '\n stop logs \n')
+        print(1)
 
         def log_filter(log_):
             return (
@@ -19,6 +21,7 @@ class filter_log:
 
 
         for log in filter(log_filter, logs):
+            print(2)
 
             try:
                 request_id = log["params"]["requestId"]

@@ -167,6 +167,15 @@ class WindowGisJkh(QWidget):
 
         print(self.cities_dict)
 
+    def select_all_checkboxes(self):
+        if self.all_checkboxes.isChecked():
+            status = True
+        else:
+            status = False
+        # Перебираем все QCheckBox и устанавливаем их состояние в "выбрано"
+        for checkbox in self.findChildren(QCheckBox):
+            checkbox.setChecked(status)
+
     def set_cities(self): #Вставляет полученные города из get cities в группу
         self.cities_dict = self.thread.cities_dict
         self.clearLayout(self.load_city_layout)
@@ -176,6 +185,7 @@ class WindowGisJkh(QWidget):
 
         city_layout = QVBoxLayout()
         city_layout.addWidget(self.download_city_butt)
+        city_layout.addWidget(self.all_checkboxes)
 
         for header in  self.cities_dict.keys():
             group = QGroupBox(header) #Cоздаём группу чекбоксов
@@ -400,6 +410,8 @@ class WindowGisJkh(QWidget):
         # self.main_v_box.setEnabled(False)
 
         self.download_city_butt = QPushButton("Выгрузить названия")
+        self.all_checkboxes = QCheckBox("Выбрать все")
+
 
 
 
@@ -423,6 +435,7 @@ class WindowGisJkh(QWidget):
         add_cities_button.clicked.connect(self.start_city_thread)
         # add_cities_button.clicked.connect(self.set_cities)
         self.download_city_butt.clicked.connect(self.download_cities)
+        self.all_checkboxes.checkStateChanged.connect(self.select_all_checkboxes)
 
 
         #Сигналы для отображения кнопок
