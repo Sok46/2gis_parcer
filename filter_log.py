@@ -142,6 +142,7 @@ class filter_log:
             "features": features
         }
         # geojson_str = json.dumps(geojson_data)
-        print(geojson_data)
+        # print(geojson_data)
+        print("fin")
         return geojson_data
 

@@ -1,11 +1,8 @@
 import sys
-from PyQt6.QtWidgets import (QApplication, QWidget, QLabel, QPushButton, QLineEdit, QButtonGroup, QVBoxLayout,
-                             QHBoxLayout, QSpinBox, QFileDialog)
-from PyQt6.QtGui import QFont, QIcon
+from PyQt6.QtWidgets import (QApplication,  QLabel, QPushButton)
+
 from PyQt6.QtCore import Qt, QTimer, QThread, pyqtSignal
-from add_pass_to_base import BasePassParcer
-from gspread import Client, Spreadsheet
-import gspread
+
 import geopandas as gpd
 from time import sleep
 import pickle
@@ -32,6 +29,7 @@ class NarodWidget(MyWidget):
     def __init__(self, count_queries=50, id_person=10):
         super().__init__()
         self.counter = 0
+        self.num_file = 0
         #
         self.count_queries = int(count_queries)
         self.id_person = id_person
@@ -41,10 +39,11 @@ class NarodWidget(MyWidget):
         self.timer.setInterval(1000)
 
         self.timer_2 = QTimer()
-        self.timer_2.setInterval(10000)
+        self.timer_2.setInterval(15000)
 
         self.yet_another_widgets()
         self.connects()
+        self.logi = []
 
 
 
@@ -84,21 +83,26 @@ class NarodWidget(MyWidget):
 
 
     def parse(self):
-        self.logi = []
 
-        logs_fast = filter_log.filter_log.logs_func(filter_log, self.driver, self.logi, self.excel_df, self.index_features)
-        geojson_str = json.dumps(logs_fast)
-        # print('logs_return compl')
-        # # Игнор ошибок
-        # original_stder = sys.stderr
-        # # sys.stderr = NullWritter()
-        # gdf_logs_return = gpd.read_file(geojson_str)
-        # sys.stderr = original_stder
-        # print('gdf_logs_return compl')
-        # num_logs_return = gdf_logs_return.shape[0]
-        # print('num_logs_return compl')
-        file_path = rf'{layers_path}\builds_saves_{max_ekr_vertikal}_{ekrans}.gpkg'
-        gdf.to_file(file_path,layer='имя_вашего_слоя', driver="GPKG")
+
+        narod_logs = filter_log.filter_log.logs_func(filter_log, self.driver, self.logi, self.excel_df, self.index_features)
+        print(narod_logs)
+        geojson_str = json.dumps(narod_logs)
+
+        # # print('logs_return compl')
+        # # # Игнор ошибок
+        # # original_stder = sys.stderr
+        # # # sys.stderr = NullWritter()
+        gdf_logs_return = gpd.read_file(geojson_str)
+        print(gdf_logs_return)
+        # # sys.stderr = original_stder
+        # # print('gdf_logs_return compl')
+        # # num_logs_return = gdf_logs_return.shape[0]
+        # # print('num_logs_return compl')
+        file_path = rf'C:\Users\sergey.biryukov\Downloads\Shlak\narod_map_{self.num_file}.gpkg'
+        gdf_logs_return.to_file(file_path,layer='имя_вашего_слоя', driver="GPKG")
+        self.logi.clear()
+        self.index_features.clear()
 
     def update_counter(self):
         self.counter += 1
@@ -142,6 +146,7 @@ class NarodWidget(MyWidget):
         sleep(2)
 
     def start_thread(self):
+        self.num_file +=1
         self.thread = ThreadClass(self.driver, self.logi, self.excel_df, self.index_features, index=1)
         # self.thread.any_signal.connect(self.update_progress_bar)
         # self.thread.accept_signal.connect(self.openMainWithLogin)
