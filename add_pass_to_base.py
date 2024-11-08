@@ -95,6 +95,7 @@ class BasePassParcer:
             # print(row[7])
             return row[9]
 
+
     # def set_queries(self, ws: Worksheet, id_person, value):
     #     cell: Cell = ws.find(str(id_person),in_column=1)
     #     if cell:

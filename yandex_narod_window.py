@@ -2,10 +2,11 @@ import sys
 from PyQt6.QtWidgets import (QApplication, QWidget, QLabel, QPushButton, QLineEdit, QButtonGroup, QVBoxLayout,
                              QHBoxLayout, QSpinBox, QFileDialog)
 from PyQt6.QtGui import QFont, QIcon
-from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtCore import Qt, QTimer, QThread, pyqtSignal
 from add_pass_to_base import BasePassParcer
 from gspread import Client, Spreadsheet
 import gspread
+import geopandas as gpd
 from time import sleep
 import pickle
 import json
@@ -46,7 +47,7 @@ class NarodWidget(MyWidget):
         self.connects()
 
 
-        self.logi = []
+
         self.index_features = []
         self.excel_df = pd.read_excel('./etc/yand_categoty.xlsx')
 
@@ -83,7 +84,21 @@ class NarodWidget(MyWidget):
 
 
     def parse(self):
-        filter_log.filter_log.logs_func(filter_log, self.driver, self.logi, self.excel_df, self.index_features)
+        self.logi = []
+
+        logs_fast = filter_log.filter_log.logs_func(filter_log, self.driver, self.logi, self.excel_df, self.index_features)
+        geojson_str = json.dumps(logs_fast)
+        # print('logs_return compl')
+        # # Игнор ошибок
+        # original_stder = sys.stderr
+        # # sys.stderr = NullWritter()
+        # gdf_logs_return = gpd.read_file(geojson_str)
+        # sys.stderr = original_stder
+        # print('gdf_logs_return compl')
+        # num_logs_return = gdf_logs_return.shape[0]
+        # print('num_logs_return compl')
+        file_path = rf'{layers_path}\builds_saves_{max_ekr_vertikal}_{ekrans}.gpkg'
+        gdf.to_file(file_path,layer='имя_вашего_слоя', driver="GPKG")
 
     def update_counter(self):
         self.counter += 1
@@ -126,10 +141,16 @@ class NarodWidget(MyWidget):
         driver.refresh()
         sleep(2)
 
+    def start_thread(self):
+        self.thread = ThreadClass(self.driver, self.logi, self.excel_df, self.index_features, index=1)
+        # self.thread.any_signal.connect(self.update_progress_bar)
+        # self.thread.accept_signal.connect(self.openMainWithLogin)
+        self.thread.start()
+
     def connects(self):
         self.browser_button.clicked.connect(self.openBrowser)
         self.timer.timeout.connect(self.update_counter)
-        self.timer_2.timeout.connect(self.parse)
+        self.timer_2.timeout.connect(self.start_thread)
 
 class ThreadClass(QThread):
     any_signal = pyqtSignal(int)
@@ -137,12 +158,13 @@ class ThreadClass(QThread):
 
     def __init__(self, driver, logi, excel_df, index_features, parent=None, index = 0):
         super(ThreadClass, self).__init__(parent)
+
         self.index = index
         self.is_running = True
-        self.password = password
-        self.button = button
-        self.user_name = user_name.text()
-        self.label = label
+        self.driver = driver
+        self.logi = logi
+        self.excel_df = excel_df
+        self.index_features = index_features
 
         self.google_sheet_url = 'https://docs.google.com/spreadsheets/d/1qsd5c5wDWo6YlGu-5SX-Ga8G7E-8XaE20KgMAVDYMD4/edit?gid=0#gid=0'
         gc: Client = gspread.service_account("./etc/google_service_account.json")
@@ -157,19 +179,12 @@ class ThreadClass(QThread):
     def run(self):
         # print(self.index, 'index')
 
-        self.button.setEnabled(False)
-        self.button.setText("Ожидайте")
-        self.label.setText("Загрузка...")
-        #
-        # from add_pass_to_base import BasePassParcer
-        cnt = 10
-        self.any_signal.emit(cnt)
-        # pass_base = BasePassParcer.verify_person(self, self.ws, self.user_name)
-        if self.index == 1:
-            self.checkAutorization()
 
-        elif self.index == 2:
-            self.easy_enter()
+        if self.index == 1:
+            self.parse()
+
+        # elif self.index == 2:
+        #     self.easy_enter()
 
 
     def stop(self):

@@ -21,12 +21,11 @@ class filter_log:
 
 
         for log in filter(log_filter, logs):
-            print(2)
 
             try:
                 request_id = log["params"]["requestId"]
-                resp_url = log["params"]["response"]["url"]
-                resp_qq = log["params"]["response"]
+                # resp_url = log["params"]["response"]["url"]
+                # resp_qq = log["params"]["response"]
 
                 # print(f"Caught {resp_url}", '\n stop \n')
                 # print('\n start driver \n ',driver.execute_cdp_cmd("Network.getResponseBody", {"requestId": request_id}), '\n end driver \n')
