@@ -46,7 +46,7 @@ class WindowGisJkh(QWidget):
     def initializeUI(self):
         """Set up the application's GUI."""
         # self.setMaximumSize(310, 130)
-        self.setWindowTitle("on_cup | Выгрузка домов")
+        self.setWindowTitle("Urban parser | Выгрузка домов")
         self.setUpMainWindow()
         self.show()
 

@@ -37,21 +37,10 @@ class WindowYandexRoute(QWidget):
     def initializeUI(self):
         """Set up the application's GUI."""
         # self.setMaximumSize(310, 130)
-        self.setWindowTitle("on_cup | Выгрузка маршрутов")
+        self.setWindowTitle("Urban parser | Выгрузка маршрутов")
         self.setUpMainWindow()
         self.show()
 
-    # def openBrowser(self):
-    #     chrome_options = Options()
-    #     chrome_options.add_experimental_option("detach", True)
-    #     self.driver = webdriver.Chrome(options=chrome_options)
-    #     url = 'https://2gis.ru/moscow'
-    #     self.save_path_textedit.setReadOnly(True)
-    #
-    #     self.driver.get(url)
-    #     self.parce_button.setEnabled(True)
-    #     self.browser_button.setEnabled(False)
-    #     self.actions = ActionChains(self.driver)
     def save_file(self):
         f_dialog = QFileDialog().getExistingDirectory()
         # f_dialog = QFileDialog().getSaveFileName(self, "Save File", "парсинг 2гис", "csv Files (*.csv)")

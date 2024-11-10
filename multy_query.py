@@ -35,7 +35,7 @@ class WindowMultyQuery(QWidget):
     def initializeUI(self):
         """Set up the application's GUI."""
         # self.setMaximumSize(310, 130)
-        self.setWindowTitle("on_cup | Многостраничная выгрузка")
+        self.setWindowTitle("Urban parser | Многостраничная выгрузка")
         self.setUpMainWindow()
         self.show()
 

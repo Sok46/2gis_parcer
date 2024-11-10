@@ -48,7 +48,7 @@ class WindowSingleQuery(QWidget):
     def initializeUI(self):
         """Set up the application's GUI."""
         # self.setMaximumSize(310, 130)
-        self.setWindowTitle("on_cup | Выборочная выгрузка")
+        self.setWindowTitle("Urban parser | Выборочная выгрузка")
         self.setUpMainWindow()
         self.show()
 

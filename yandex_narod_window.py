@@ -16,6 +16,7 @@ from selenium.webdriver import DesiredCapabilities
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium import webdriver
 import pandas as pd
+from query_setter import QuerySetter
 
 
 from selenium.webdriver.common.by import By
@@ -50,15 +51,32 @@ class NarodWidget(MyWidget):
         self.index_features = []
         self.excel_df = pd.read_excel('./etc/yand_categoty.xlsx')
 
+    def stop_parsing(self):
+        self.timer.stop()
+        self.sec_label.setText('Таймер парсинга: 0')
+        self.driver.close()
+        self.browser_button.setEnabled(True)
+        self.stop_button.hide()
+        self.counter = 0
+
+        # self.main_v_box.removeWidget(self.stop_button)
+
+
+
 
     def openBrowser(self):
+        self.stop_button.show()
+
+
         # capabilities = DesiredCapabilities.CHROME
         options = webdriver.ChromeOptions()
         options.set_capability(
             "goog:loggingPrefs", {"performance": "ALL"}
         )
         self.driver = webdriver.Chrome(options=options)
-        url = 'https://n.maps.yandex.ru/#!/?z=16&ll=91.428643%2C53.722016&l=nk%23sat'
+        lat, long = self.cityname_textedit.text().strip().split(',')
+
+        url = f'https://n.maps.yandex.ru/#!/?z=16&ll={long}%2C{lat}&l=nk%23sat'
         self.save_path_textedit.setReadOnly(True)
 
         self.driver.get(url)
@@ -76,41 +94,28 @@ class NarodWidget(MyWidget):
             self.auth_yandex()
 
 
-        # sleep(10)
-        # self.load_cookies(self.driver)
-        #
-        #
-
-
-    def parse(self):
-
-
-        narod_logs = filter_log.filter_log.logs_func(filter_log, self.driver, self.logi, self.excel_df, self.index_features)
-        print(narod_logs)
-        geojson_str = json.dumps(narod_logs)
-
-        # # print('logs_return compl')
-        # # # Игнор ошибок
-        # # original_stder = sys.stderr
-        # # # sys.stderr = NullWritter()
-        gdf_logs_return = gpd.read_file(geojson_str)
-        print(gdf_logs_return)
-        # # sys.stderr = original_stder
-        # # print('gdf_logs_return compl')
-        # # num_logs_return = gdf_logs_return.shape[0]
-        # # print('num_logs_return compl')
-        file_path = rf'C:\Users\sergey.biryukov\Downloads\Shlak\narod_map_{self.num_file}.gpkg'
-        gdf_logs_return.to_file(file_path,layer='имя_вашего_слоя', driver="GPKG")
-        self.logi.clear()
-        self.index_features.clear()
-
     def update_counter(self):
         self.counter += 1
-        self.sec_label.setText(str(self.counter))
+        self.sec_label.setText(f'Таймер парсинга:{self.counter}')
+        if self.counter % 15 == 0:
+            check_query = QuerySetter().check_query(self.count_queries, 50, self.header_label)
+            if check_query:
+                self.start_thread()
+                self.count_queries = QuerySetter().set_query(self.count_queries, self.my_base, self.header_label,
+                                                             50, self.ws, self.id_person, self.sh)
+            else:
+                self.stop_parsing()
 
     def yet_another_widgets(self):
-        self.sec_label = QLabel('0', self)
+        self.sec_label = QLabel(f'Таймер парсинга: 0', self)
         self.main_v_box.insertWidget(1, self.sec_label)
+        self.cityname_label.setText("Координаты старта")
+        self.cityname_textedit.setPlaceholderText("55.751731, 37.618867")
+        self.stop_button = QPushButton("СТОП")
+        self.stop_button.setStyleSheet('QPushButton {background-color: #A3C1DA; color: red;}')
+        self.main_v_box.insertWidget(1, self.stop_button)  # КНОПКА СТОП
+        self.stop_button.hide()
+
     def start_timer(self):
         self.timer.start()
         self.timer_2.start()
@@ -132,11 +137,12 @@ class NarodWidget(MyWidget):
         try:
             self.main_v_box.removeWidget(self.auth_butt)
             self.auth_butt.deleteLater()
-            self.sec_label.setText("0")
+            self.sec_label.setText('Таймер парсинга: 0')
         except:
             pass
         pickle.dump(self.driver.get_cookies(), open(f"yandex_cookies", "wb"))
         self.start_timer()
+
 
     def load_cookies(self,driver):
         for cookie in pickle.load(open(f"yandex_cookies", "rb")):
@@ -146,23 +152,28 @@ class NarodWidget(MyWidget):
         sleep(2)
 
     def start_thread(self):
+        # check_query = QuerySetter().check_query(self.count_queries, 50, self.header_label)
+        # if check_query:
         self.num_file +=1
-        self.thread = ThreadClass(self.driver, self.logi, self.excel_df, self.index_features, index=1)
+        self.thread = ThreadClass(self.driver, self.logi, self.excel_df, self.index_features, self.num_file, index=1)
         # self.thread.any_signal.connect(self.update_progress_bar)
         # self.thread.accept_signal.connect(self.openMainWithLogin)
         self.thread.start()
 
+
     def connects(self):
         self.browser_button.clicked.connect(self.openBrowser)
         self.timer.timeout.connect(self.update_counter)
-        self.timer_2.timeout.connect(self.start_thread)
+        self.stop_button.clicked.connect(self.stop_parsing)
+        # self.timer_2.timeout.connect(self.start_thread)
 
 class ThreadClass(QThread):
     any_signal = pyqtSignal(int)
     accept_signal = pyqtSignal(int)
 
-    def __init__(self, driver, logi, excel_df, index_features, parent=None, index = 0):
+    def __init__(self, driver, logi, excel_df, index_features,num_file, parent=None, index = 0):
         super(ThreadClass, self).__init__(parent)
+        self.num_file = num_file
 
         self.index = index
         self.is_running = True
@@ -177,13 +188,21 @@ class ThreadClass(QThread):
         self.ws = sh.sheet1
 
     def parse(self):
-        filter_log.filter_log.logs_func(filter_log, self.driver, self.logi, self.excel_df, self.index_features)
+        narod_logs = filter_log.filter_log.logs_func(filter_log, self.driver, self.logi, self.excel_df, self.index_features)
+        geojson_str = json.dumps(narod_logs)
+        print('geojson_str')
+        gdf_logs_return = gpd.read_file(geojson_str)
+
+        file_path = rf'C:\Users\doshi\Downloads\narod_map.gpkg'
+        print(gdf_logs_return.geom_type[1])
+        gdf_logs_return.to_file(file_path,layer=f"Геометрия Яндекса", driver="GPKG")
+
+        self.logi.clear()
+        self.index_features.clear()
 
 
 
     def run(self):
-        # print(self.index, 'index')
-
 
         if self.index == 1:
             self.parse()

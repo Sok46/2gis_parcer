@@ -17,7 +17,7 @@ class MainWindow(QWidget):
     def initializeUI(self):
         """Set up the application's GUI."""
         # self.setMaximumSize(310, 130)
-        self.setWindowTitle("on_cup parser")
+        self.setWindowTitle("Urban parser")
         self.setUpMainWindow()
         self.show()
 
@@ -40,6 +40,11 @@ class MainWindow(QWidget):
         from MKD_IJS_Window import WindowGisJkh
         self.close()
         self.w = WindowGisJkh(self.count_queries, self.id_person)
+        self.w.show()
+    def open_narod_yandex(self):
+        from yandex_narod_window import NarodWidget
+        self.close()
+        self.w = NarodWidget(self.count_queries, self.id_person)
         self.w.show()
     def get_all_queries(self):
         self.all_queries = WindowAuth.get_all_queries()
@@ -91,12 +96,17 @@ class MainWindow(QWidget):
         button_group.addButton(self.houses_button)
         self.main_v_box.addWidget(self.houses_button)
 
+        self.narod_button = QPushButton("Выгрузка Народной карты")
+        button_group.addButton(self.narod_button)
+        self.main_v_box.addWidget(self.narod_button)
+
         self.setLayout(self.main_v_box)
         self.single_button.clicked.connect(self.open_singlequery)
         self.houses_button.clicked.connect(self.open_gis_jkh)
         # self.link_url.textChanged.connect(self.enabledUrlButt)
         self.multy_button.clicked.connect(self.open_multyquery)
         self.route_button.clicked.connect(self.open_route_parser)
+        self.narod_button.clicked.connect(self.open_narod_yandex)
 
 
 

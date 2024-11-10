@@ -22,7 +22,7 @@ class WindowAuth(QWidget):
     def initializeUI(self):
         """Set up the application's GUI."""
         # self.setMaximumSize(310, 130)
-        self.setWindowTitle("on_cup")
+        self.setWindowTitle("Urban parser")
         self.setUpMainWindow()
         self.show()
 
@@ -49,7 +49,7 @@ class WindowAuth(QWidget):
         self.len_url = 0
         self.filename = datetime.datetime.now()
         """Создайте и расположите виджеты в главном окне."""
-        self.header_label = QLabel("on_cup_parcer")
+        self.header_label = QLabel("Urban parser")
         self.header_label.setFont(QFont("Arial", 18))
         self.header_label.setAlignment(
             Qt.AlignmentFlag.AlignCenter)
