@@ -9,7 +9,7 @@ class BasePassParcer:
         self.googe_sheet_url = 'https://docs.google.com/spreadsheets/d/1qsd5c5wDWo6YlGu-5SX-Ga8G7E-8XaE20KgMAVDYMD4/edit?gid=0#gid=0'
         self.all_query = 1000
         self.id_person = None
-        gc: Client = gspread.service_account("./etc/google_service_account.json")
+        gc: Client = gspread.service_account("./icons/google_service_account.json")
         self.sh: Spreadsheet = gc.open_by_url(self.googe_sheet_url)
         self.ws = self.sh.sheet1
         self.ws_tarif = self.sh.worksheet('tarifs')

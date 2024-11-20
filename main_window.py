@@ -3,7 +3,7 @@ from PyQt6.QtWidgets import (QApplication, QWidget, QLabel, QPushButton, QLineEd
 from PyQt6.QtGui import QFont, QIcon
 from PyQt6.QtCore import Qt
 from multy_query import WindowMultyQuery
-from authorization_window import WindowAuth
+from Urban_parser import WindowAuth
 
 
 class MainWindow(QWidget):

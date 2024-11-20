@@ -157,7 +157,7 @@ class WindowAuth(QWidget):
 
         from add_pass_to_base import BasePassParcer
         self.google_sheet_url = 'https://docs.google.com/spreadsheets/d/1qsd5c5wDWo6YlGu-5SX-Ga8G7E-8XaE20KgMAVDYMD4/edit?gid=0#gid=0'
-        gc: Client = gspread.service_account("./etc/google_service_account.json")
+        gc: Client = gspread.service_account("./icons/google_service_account.json")
         sh: Spreadsheet = gc.open_by_url(self.google_sheet_url)
         ws = sh.sheet1
         self.ws_tarif = sh.worksheet('tarifs')

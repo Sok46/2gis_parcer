@@ -50,7 +50,7 @@ class NarodWidget(MyWidget):
 
 
         self.index_features = []
-        self.excel_df = pd.read_excel('./etc/yand_categoty.xlsx')
+        self.excel_df = pd.read_excel('./icons/yand_categoty.xlsx')
 
     def stop_parsing(self):
         self.timer.stop()
@@ -185,7 +185,7 @@ class ThreadClass(QThread):
         self.index_features = index_features
 
         self.google_sheet_url = 'https://docs.google.com/spreadsheets/d/1qsd5c5wDWo6YlGu-5SX-Ga8G7E-8XaE20KgMAVDYMD4/edit?gid=0#gid=0'
-        gc: Client = gspread.service_account("./etc/google_service_account.json")
+        gc: Client = gspread.service_account("./icons/google_service_account.json")
         sh: Spreadsheet = gc.open_by_url(self.google_sheet_url)
         self.ws = sh.sheet1
 
