@@ -35,13 +35,13 @@ class filter_log:
                 pass
         bodyes = []
         # matching_coordinates = []
-        ThreadMetaData = []
-
-        features_list = []
-        stops = {
-            "type": "FeatureCollection",
-            "features": []
-        }
+        # ThreadMetaData = []
+        #
+        # features_list = []
+        # stops = {
+        #     "type": "FeatureCollection",
+        #     "features": []
+        # }
 
         # Перебираем все fetch/xhr
         for i, body in enumerate(logi):
@@ -58,10 +58,10 @@ class filter_log:
 
             except:
                 pass
-        geojson_data = {
-            "type": "FeatureCollection",
-            "features": []
-        }
+        # geojson_data = {
+        #     "type": "FeatureCollection",
+        #     "features": []
+        # }
 
         matching_prop = []
         matching_coordinates = []
@@ -143,6 +143,6 @@ class filter_log:
         }
         # geojson_str = json.dumps(geojson_data)
         # print(geojson_data)
-        print("fin")
+        # print("fin")
         return geojson_data
 

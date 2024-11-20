@@ -8,7 +8,7 @@ class QuerySetter():
 
     def check_query(self,count_queries, new_value_query,header_label):
         if count_queries < new_value_query:
-            print("Недостаточно запросов")
+            # print("Недостаточно запросов")
             header_label.setText(f"Недостаточно запросов")
 
             header_label.setStyleSheet("color: red;")
@@ -31,5 +31,5 @@ class QuerySetter():
         # print("new_value_query")
         my_base.set_queries(ws, int(id_person), sh, int(count_queries))
         header_label.setText(f"У вас {count_queries} запросов")
-        print("new_count_queries", count_queries)
+        # print("new_count_queries", count_queries)
         return count_queries
