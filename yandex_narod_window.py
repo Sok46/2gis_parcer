@@ -10,21 +10,13 @@ import json
 from base_widget import MyWidget
 import filter_log
 import os.path
-
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver import DesiredCapabilities
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium import webdriver
 import pandas as pd
 from query_setter import QuerySetter
-
-
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
 import gspread
 from gspread import Client, Spreadsheet
-from add_pass_to_base import BasePassParcer
-
+import fiona
 
 class NarodWidget(MyWidget):
     def __init__(self, count_queries=50, id_person=10):

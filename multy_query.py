@@ -203,23 +203,13 @@ class WindowMultyQuery(QWidget):
             df = pd.DataFrame({'name': points, 'type': type_arr, 'descr': geos, 'ulitsa': ulitsa, 'stars': arr_stars,
                                'count_voices': arr_voices, 'lat': arr_lat, 'long': arr_long, 'url': arr_urls})
             print('сформирован DF')
-            # print(df)
-            df.to_csv(self.save_path_textedit.text(), sep=';',
-                      encoding='utf8', index=False)
-            print('df сохранён')
+            check_query = QuerySetter().check_query(self.count_queries, j, self.header_label)
+            if check_query:
+                df.to_csv(self.save_path_textedit.text(), sep=';',
+                          encoding='utf8', index=False)
 
-
-            self.count_queries -= j
-
-            print(self.count_queries)
-            self.header_label.setText(f"У вас {self.count_queries} запросов")
-            print(self.ws)
-            print(self.id_person)
-            print(int(self.count_queries))
-            self.my_base.set_queries(self.ws, int(self.id_person), self.sh, int(self.count_queries))
-            # self.my_base.set_queries(self.ws, int(self.id_person), int(self.count_queries))
-
-
+                self.count_queries = QuerySetter().set_query(self.count_queries, self.my_base, self.header_label, j,
+                                                             self.ws, self.id_person, self.sh)
 
 
     def setUpMainWindow(self):

@@ -194,20 +194,26 @@ class WindowSingleQuery(QWidget):
             head = True
 
 
-        self.count_queries -= 1
+        # self.count_queries -= 1
+
+        check_query = QuerySetter().check_query(self.count_queries, 1, self.header_label)
+        if check_query:
+            df.to_csv(self.link_url.text(), sep=';', encoding='utf8', index=False, mode='a', header=head)
+
+            self.count_queries = QuerySetter().set_query(self.count_queries, self.my_base, self.header_label,1, self.ws, self.id_person, self.sh)
 
 
-
-        if self.my_base.set_queries(self.ws,int(self.id_person), self.sh, int(self.count_queries)): # проверка на существоваение id пользователя
-            df.to_csv(self.link_url.text(), sep=';',
-                      encoding='utf8', index=False, mode='a', header=head)
-            self.header_label.setText(f"У вас {self.count_queries} запросов")
-        else:
-            print("Нет юзера")
-            self.header_label.setText(f"Юзера не существует")
-            self.header_label.setStyleSheet("color: red;")
+        # if self.my_base.set_queries(self.ws,int(self.id_person), self.sh, int(self.count_queries)): # проверка на существоваение id пользователя
+        #     df.to_csv(self.link_url.text(), sep=';',
+        #               encoding='utf8', index=False, mode='a', header=head)
+        #     self.header_label.setText(f"У вас {self.count_queries} запросов")
+        # else:
+        #     print("Нет юзера")
+        #     self.header_label.setText(f"Юзера не существует")
+        #     self.header_label.setStyleSheet("color: red;")
             # self.count_queries = 0
             # self.driver.close()
+
 
     def enabledUrlButt(self):
         # self.browser_button.setEnabled(True)

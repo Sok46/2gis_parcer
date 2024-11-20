@@ -26,6 +26,7 @@ class WindowGisJkh(QWidget):
         self.id_person = id_person
         self.my_base = BasePassParcer()
         self.cities_dict = {}
+        self.count_rows = 0
 
         tkn = "y0_AgAAAAAGvkyVAAyD3AAAAAESV2AkAABx7BX4XRNEv7zh0HWaFEzZX1T2nA"
         self.y = yadisk.YaDisk(token=tkn)
@@ -462,22 +463,29 @@ class WindowGisJkh(QWidget):
 
             self.thread = ThreadClass(self.sheets_urls, self.base_url, self.region_combobox,self.header_label, index=self.indx, folder = self.save_path_textedit.text(),checked_cities=self.checked_cities, text_cities=text_cities)
             self.thread.any_signal.connect(self.update_progress_bar)
+            self.thread.query_signal.connect(self.update_query)
             self.thread.start()
 
     def update_progress_bar(self, value):
         self.prog_bar.setValue(value)
         if self.prog_bar.value() == 100 and self.indx == 1:
             self.set_cities()
-        if self.prog_bar.value() > 80 and self.indx == 2:
+        if self.prog_bar.value() > 90 and self.indx == 2:
+            print('Конец')
 
-            self.count_queries = QuerySetter().set_query(self.count_queries, self.my_base, self.header_label, 200, self.ws, self.id_person, self.sh)
 
 
+    def update_query(self, value):
+        self.count_rows = value
+        self.count_queries = QuerySetter().set_query(self.count_queries, self.my_base, self.header_label,
+                                                     self.count_rows, self.ws, self.id_person, self.sh)
+        print('количество запросов:',self.count_rows)
 
         # self.parce_button.clicked.connect(self.parce)
 
 class ThreadClass(QThread):
-    any_signal = pyqtSignal(int)  # Signal to communicate progress updates
+    any_signal = pyqtSignal(int)
+    query_signal = pyqtSignal(int) # Signal to communicate progress updates
 
     def __init__(self, urls, base_url, region_combobox, label, parent=None, index=0, folder = None, checked_cities=None, text_cities = None):
         super(ThreadClass, self).__init__(parent)
@@ -492,24 +500,15 @@ class ThreadClass(QThread):
         self.text_cities = text_cities
 
     def parce(self):
-        print(21312)
         folder = self.folder
-        print(53422)
-        # print(self.cityname_textedit.text())
-        # folder = self.save_path_textedit.text()
         if not os.path.exists(folder + '\export'):
             os.makedirs(folder + '\export')
-
-        print(000)
         for url in self.sheets_urls:
-
             final_url = self.base_url + urlencode(dict(public_key=url))
             response = requests.get(final_url)
             download_url = response.json()['href']
             df = pd.read_csv(download_url, sep='|')
 
-            # Удаление индекса из начала строки в колонке "address"
-            # df['Адрес ОЖФ'] = df['Адрес ОЖФ'].str.slice(8)
 
             df.loc[df['Адрес ОЖФ'].str.contains('^\d'), 'Адрес ОЖФ'] = df['Адрес ОЖФ'].str.slice(8)
             # print(df['Адрес ОЖФ'] )
@@ -562,6 +561,11 @@ class ThreadClass(QThread):
                     header = False
                 result.to_csv(rf'{folder}\export\ГИС_ЖКХ_{city}.csv', sep=';', encoding='cp1251', header=header,
                               mode='a', index=False)
+                row_size = len(result.index)
+                query_size = int( row_size / 400)
+                # print(query_size)
+                self.query_signal.emit(query_size)
+
     def return_cities(self):
         return self.cities_dict
 
@@ -575,8 +579,8 @@ class ThreadClass(QThread):
         self.any_signal.emit(self.progress)
 
         step_loading = 80 / len(self.sheets_urls)  # Increment progress based on the number of URLs
-        print('длина',len(self.sheets_urls))
-        print("step loading", step_loading)
+        # print('длина',len(self.sheets_urls))
+        # print("step loading", step_loading)
 
         for u, url in enumerate(self.sheets_urls):
             # Update progress after processing each URL
@@ -674,7 +678,7 @@ class ThreadClass(QThread):
         if self.index == 1:
             self.get_cities()  # If index is 1, fetch cities
         elif self.index == 2:
-            print(1234567)
+            # print(1234567)
             self.parce()
 
         # self.label.setText("Завершено")  # Update label text upon completion
