@@ -41,6 +41,7 @@ class NarodWidget(MyWidget):
 
         self.timer_2 = QTimer()
         self.timer_2.setInterval(15000)
+        # file_path = self.save_path_textedit.te
 
         self.yet_another_widgets()
         self.connects()
@@ -155,7 +156,7 @@ class NarodWidget(MyWidget):
         # check_query = QuerySetter().check_query(self.count_queries, 50, self.header_label)
         # if check_query:
         self.num_file +=1
-        self.thread = ThreadClass(self.driver, self.logi, self.excel_df, self.index_features, self.num_file, index=1)
+        self.thread = ThreadClass(self.driver, self.logi, self.excel_df, self.index_features, self.num_file, self.save_path_textedit.text(),index=1)
         # self.thread.any_signal.connect(self.update_progress_bar)
         # self.thread.accept_signal.connect(self.openMainWithLogin)
         self.thread.start()
@@ -171,9 +172,10 @@ class ThreadClass(QThread):
     any_signal = pyqtSignal(int)
     accept_signal = pyqtSignal(int)
 
-    def __init__(self, driver, logi, excel_df, index_features,num_file, parent=None, index = 0):
+    def __init__(self, driver, logi, excel_df, index_features,num_file,file_path, parent=None, index = 0):
         super(ThreadClass, self).__init__(parent)
         self.num_file = num_file
+        self.filepath = file_path
 
         self.index = index
         self.is_running = True
@@ -193,8 +195,8 @@ class ThreadClass(QThread):
         print('geojson_str')
         gdf_logs_return = gpd.read_file(geojson_str)
 
-        file_path = rf'C:\Users\doshi\Downloads\narod_map.gpkg'
-        print(gdf_logs_return.geom_type[1])
+        file_path = rf'{self.filepath}\narod_map.gpkg'
+
         gdf_logs_return.to_file(file_path,layer=f"Геометрия Яндекса", driver="GPKG")
 
         self.logi.clear()
