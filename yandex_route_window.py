@@ -300,7 +300,7 @@ class WindowYandexRoute(QWidget):
         # self.link_url.addAction(QIcon('icons/folder_icon.png'), QLineEdit.ActionPosition.LeadingPosition)
         seach_action = self.save_path_textedit.addAction(QIcon('icons/folder_icon.png'), QLineEdit.ActionPosition.LeadingPosition)
 
-        self.save_path_textedit.setPlaceholderText('Укажите путь для выходного csv ...')
+        self.save_path_textedit.setPlaceholderText('Укажите путь для выходного geojson ...')
         self.main_v_box.addWidget(self.save_path_textedit)
 
         cityname_label = QLabel("Название города (и субъект)*")

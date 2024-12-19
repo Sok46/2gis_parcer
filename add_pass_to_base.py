@@ -122,6 +122,19 @@ class BasePassParcer:
                 },
                 {
                     'updateCells': {
+                        'rows': [{'values': [{'userEnteredValue': {'numberValue': value}}]}],
+                        'fields': '*',
+                        'range': {
+                            'sheetId': ws.id,
+                            'startRowIndex': row - 1,
+                            'endRowIndex': row,
+                            'startColumnIndex': 8,
+                            'endColumnIndex': 9
+                        }
+                    }
+                },
+                {
+                    'updateCells': {
                         'rows': [{'values': [{'userEnteredValue': {'stringValue': datetime.date.today().isoformat()}}]}],
                         'fields': '*',
                         'range': {

@@ -31,9 +31,12 @@ class filter_log:
                 # print('\n start driver \n ',driver.execute_cdp_cmd("Network.getResponseBody", {"requestId": request_id}), '\n end driver \n')
                 l = (driver.execute_cdp_cmd("Network.getResponseBody", {"requestId": request_id}))
                 logi.append(l)
+                # print(l)
             except:
                 pass
         bodyes = []
+        # print(logi)
+
         # matching_coordinates = []
         # ThreadMetaData = []
         #
@@ -42,7 +45,7 @@ class filter_log:
         #     "type": "FeatureCollection",
         #     "features": []
         # }
-
+        # print(json.loads(logi[0]['body']))
         # Перебираем все fetch/xhr
         for i, body in enumerate(logi):
             try:
@@ -50,6 +53,7 @@ class filter_log:
                 # if i == 1:
                 json_data = json.loads((data))
                 # print("\n",json_data,"\n")
+                # print(f'\n ', json_data["data"], '\n')
                 # print(f'\n ', json_data["data"]['features'], '\n')
                 # print(f'\n body{i}')
                 bodyes.append(json_data["data"][-1])
@@ -58,6 +62,7 @@ class filter_log:
 
             except:
                 pass
+        # print(bodyes)
         # geojson_data = {
         #     "type": "FeatureCollection",
         #     "features": []
