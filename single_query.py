@@ -32,6 +32,7 @@ class WindowSingleQuery(QWidget):
         self.id_person = id_person
         self.my_base = BasePassParcer()
         self.driver = None
+        print(count_queries, id_person)
 
         # print(int(self.winId()))
 
@@ -234,7 +235,7 @@ class WindowSingleQuery(QWidget):
     def open_main(self):
         from main_window import MainWindow
         self.close()
-        self.w = MainWindow(self.count_queries)
+        self.w = MainWindow(self.count_queries,self.id_person)
         self.w.show()
         # self.driver.
         # if self.driver:

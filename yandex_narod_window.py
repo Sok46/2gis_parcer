@@ -35,6 +35,7 @@ class NarodWidget(MyWidget):
         self.timer_2.setInterval(15000)
         # file_path = self.save_path_textedit.te
 
+        self.cityname_textedit.setEnabled(False)
         self.yet_another_widgets()
         self.connects()
         self.logi = []
@@ -43,6 +44,7 @@ class NarodWidget(MyWidget):
 
         self.index_features = []
         self.excel_df = pd.read_excel('./icons/yand_categoty.xlsx')
+
 
     def stop_parsing(self):
         self.timer.stop()
@@ -100,6 +102,7 @@ class NarodWidget(MyWidget):
                 self.stop_parsing()
 
     def yet_another_widgets(self):
+
         self.sec_label = QLabel(f'Таймер парсинга: 0', self)
         self.main_v_box.insertWidget(1, self.sec_label)
         self.cityname_label.setText("Координаты старта")
@@ -158,6 +161,7 @@ class NarodWidget(MyWidget):
         self.browser_button.clicked.connect(self.openBrowser)
         self.timer.timeout.connect(self.update_counter)
         self.stop_button.clicked.connect(self.stop_parsing)
+
         # self.timer_2.timeout.connect(self.start_thread)
 
 class ThreadClass(QThread):

@@ -19,25 +19,7 @@ class filter_log:
                     and "plain" in log_["params"]["response"]["mimeType"] #Нужно посмотреть mimetype хар файла и какой там mimetype у фичей
             )
 
-        def merge_geojson(logi):
-            merged_features = []
 
-            for log in logi:
-                try:
-                    # Преобразуем строку JSON в объект Python, если это нужно
-                    geojson_obj = json.loads(log["body"])  # log["body"] — это содержимое geoJSON
-                    features = geojson_obj.get("features", [])
-                    merged_features.extend(features)  # Добавляем все features
-                except Exception as e:
-                    print(f"Ошибка обработки логов: {e}")
-
-            # Итоговый объединенный GeoJSON
-            merged_geojson = {
-                "type": "FeatureCollection",
-                "features": merged_features
-            }
-
-            return merged_geojson
 
 
         for log in filter(log_filter, logs):
@@ -52,7 +34,9 @@ class filter_log:
                 geojson_obj = json.loads(l["body"])  # log["body"] — это содержимое geoJSON
                 features = geojson_obj.get("features", [])
                 logi.extend(features)
-                # print(l)
+
+
+                # print(geojson_obj.get("features")[0]['properties'], '\n')
                 # logi.append(l)
             except:
                 pass
@@ -60,6 +44,6 @@ class filter_log:
                 "type": "FeatureCollection",
                 "features": logi
             }
-
+        # print()
         return merged_geojson
 

@@ -58,7 +58,7 @@ class WindowMultyQuery(QWidget):
     def open_main(self):
         from main_window import MainWindow
         self.hide()
-        self.w = MainWindow(self.count_queries)
+        self.w = MainWindow(self.count_queries,self.id_person)
         self.w.show()
 
     def multiParce(self):

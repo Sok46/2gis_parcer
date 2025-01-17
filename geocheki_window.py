@@ -1,6 +1,6 @@
 import sys
 from PyQt6.QtWidgets import (QApplication,  QLabel, QPushButton)
-
+import datetime
 from PyQt6.QtCore import Qt, QTimer, QThread, pyqtSignal
 
 import geopandas as gpd
@@ -77,14 +77,7 @@ class GeochecksWidget(MyWidget):
 
         # sleep(4)
         self.start_timer()
-        # if self.check_auth_file():
-        #     print('check_auth_file')
-        #     self.load_cookies(self.driver)
-        #
-        #     self.start_timer()
-        # # if 'где каждый делает карты точнее' in str(self.driver.page_source):
-        # else:
-        #     self.auth_yandex()
+
 
 
     def update_counter(self):
@@ -102,8 +95,8 @@ class GeochecksWidget(MyWidget):
     def yet_another_widgets(self):
         self.sec_label = QLabel(f'Таймер парсинга: 0', self)
         self.main_v_box.insertWidget(1, self.sec_label)
-        self.cityname_label.setText("Координаты старта")
-        self.cityname_textedit.setPlaceholderText("55.751731, 37.618867")
+        self.cityname_label.deleteLater()
+        self.cityname_textedit.deleteLater()
         self.stop_button = QPushButton("СТОП")
         self.stop_button.setStyleSheet('QPushButton {background-color: #A3C1DA; color: red;}')
         self.main_v_box.insertWidget(1, self.stop_button)  # КНОПКА СТОП
@@ -152,15 +145,11 @@ class ThreadClass(QThread):
 
     def parse(self):
         narod_logs = filter_log_geochecks.filter_log.logs_func(filter_log_geochecks, self.driver, self.logi, self.excel_df, self.index_features)
-        geojson_str = json.dumps(narod_logs)
-        print('geojson_str')
-        gdf_logs_return = gpd.read_file(geojson_str)
-        print('geojson_str2')
 
-        file_path = rf'{self.filepath}\Геочеки.gpkg'
-        print('geojson_str3')
+        with open(rf'{self.filepath}\geocheki_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.geojson', "w", encoding="utf-8") as file:
+            json.dump(narod_logs,file,ensure_ascii=False, indent=4)
 
-        gdf_logs_return.to_file(file_path,layer=f"Геочеки", driver="GPKG")
+
 
         self.logi.clear()
         self.index_features.clear()
