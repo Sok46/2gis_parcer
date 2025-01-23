@@ -63,6 +63,7 @@ class MyApp(QWidget):
 
         self.shape_window.move(x, y)
         self.shape_window.show()
+        print(3456)
 
 
 if __name__ == '__main__':
