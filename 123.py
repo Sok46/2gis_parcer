@@ -37,17 +37,22 @@ class MyApp(QWidget):
         self.setLayout(self.layout)
 
         self.button = QPushButton('Start')
+        self.my_label = QLabel('MyText')
+        self.layout.addWidget(self.my_label)
         self.layout.addWidget(self.button)
+
 
         # Устанавливаем фильтр событий на кнопку
         self.button.installEventFilter(self)
 
         # Создаем окно-форму для текста
         self.shape_window = ShapeWindow(self)
-        self.button.clicked.connect(self.onClicked)
-    def onClicked(self):
-        print(54643)
-        self.button.setText('sdasdasda')
+        self.connects()
+
+    def click_start(self):
+        print(12345)
+        self.my_label.setText("xxxxxx xxxxx")
+
     def eventFilter(self, source, event):
         if source == self.button:
             if event.type() == QEvent.Type.Enter:
@@ -67,6 +72,12 @@ class MyApp(QWidget):
         self.shape_window.move(x, y)
         self.shape_window.show()
         print(3456)
+        print(55555)
+        print(55545555587855)
+
+    def connects(self):
+        self.button.clicked.connect(self.click_start)
+
 
 
 if __name__ == '__main__':
