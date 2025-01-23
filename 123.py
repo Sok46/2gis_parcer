@@ -44,7 +44,10 @@ class MyApp(QWidget):
 
         # Создаем окно-форму для текста
         self.shape_window = ShapeWindow(self)
-
+        self.button.clicked.connect(self.onClicked)
+    def onClicked(self):
+        print(54643)
+        self.button.setText('sdasdasda')
     def eventFilter(self, source, event):
         if source == self.button:
             if event.type() == QEvent.Type.Enter:
