@@ -206,7 +206,7 @@ class WindowMultyQuery(QWidget):
             check_query = QuerySetter().check_query(self.count_queries, j, self.header_label)
             if check_query:
                 df.to_csv(self.save_path_textedit.text(), sep=';',
-                          encoding='utf8', index=False)
+                          encoding='cp1251', index=False)
 
                 self.count_queries = QuerySetter().set_query(self.count_queries, self.my_base, self.header_label, j,
                                                              self.ws, self.id_person, self.sh)

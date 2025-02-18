@@ -271,7 +271,7 @@ class WindowYandexRoute(QWidget):
         self.header_label.setFont(QFont("Arial", 18))
         self.header_label.setAlignment(
             Qt.AlignmentFlag.AlignCenter)
-        question_label = QLabel("Выберете действие")
+        question_label = QLabel("Укажите путь выходного .geojson")
         question_label.setAlignment(Qt.AlignmentFlag.AlignBottom)
 
         button_group = QButtonGroup(self)
@@ -300,7 +300,7 @@ class WindowYandexRoute(QWidget):
         # self.link_url.addAction(QIcon('icons/folder_icon.png'), QLineEdit.ActionPosition.LeadingPosition)
         seach_action = self.save_path_textedit.addAction(QIcon('icons/folder_icon.png'), QLineEdit.ActionPosition.LeadingPosition)
 
-        self.save_path_textedit.setPlaceholderText('Укажите путь для выходного geojson ...')
+        self.save_path_textedit.setPlaceholderText('C:/user/your/folder')
         self.main_v_box.addWidget(self.save_path_textedit)
 
         cityname_label = QLabel("Название города (и субъект)*")
@@ -315,7 +315,7 @@ class WindowYandexRoute(QWidget):
         routes_label.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.main_v_box.addWidget(routes_label)
         self.routes_textedit = QLineEdit()
-        self.routes_textedit.setPlaceholderText("1,2,125,троллейбус 1")
+        self.routes_textedit.setPlaceholderText("Пример: 8,5, троллейбус 2, трам 125")
         self.main_v_box.addWidget(self.routes_textedit)
 
 

@@ -8,10 +8,10 @@ import gspread
 import time
 
 class MyWidget(QWidget):
-    def __init__(self,count_queries = 25, id_person = 10):
+    def __init__(self,count_queries = 25, id_person = 10, price_query = 15):
         super().__init__()
 
-
+        self.priceQuery = price_query
         self.count_queries = int(count_queries)
         self.id_person = id_person
         self.my_base = BasePassParcer()
@@ -70,8 +70,13 @@ class MyWidget(QWidget):
             self.cityname_textedit.setEnabled(False)
 
     def setUpMainWindow(self):
-        self.header_label = QLabel(f"У вас {self.count_queries} запросов")
-        self.header_label.setFont(QFont("Arial", 18))
+        self.coinIcon_path = "C:/Users/Sergey_Biryukov/Desktop/parcers/pythonProject/2gis_parcer/icons/coin.png"
+        self.coinIcon = QIcon(self.coinIcon_path)
+        self.header_label = QLabel(
+            f'У вас {self.count_queries} <img src={self.coinIcon_path} width="30" height="30" style="vertical-align: top;">'
+        )
+
+        self.header_label.setFont(QFont("Arial", 14))
         self.header_label.setAlignment(
             Qt.AlignmentFlag.AlignCenter)
         question_label = QLabel("Укажите путь...")
@@ -115,7 +120,10 @@ class MyWidget(QWidget):
         self.main_v_box.addWidget(self.cityname_textedit)
 
 
-        self.browser_button = QPushButton("Начать парсинг")
+        self.browser_button = QPushButton(f"Начать парсинг   ({self.priceQuery})")
+        self.browser_button.setIcon(self.coinIcon)
+        self.browser_button.setLayoutDirection(Qt.LayoutDirection.RightToLeft)  # Иконка справа
+
         self.browser_button.setEnabled(False)
         self.main_v_box.addWidget(self.browser_button)
         self.main_v_box.addWidget(self.back_button)

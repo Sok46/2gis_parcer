@@ -19,14 +19,16 @@ from gspread import Client, Spreadsheet
 import fiona
 
 class NarodWidget(MyWidget):
-    def __init__(self, count_queries=50, id_person=10):
+    def __init__(self, count_queries=50, id_person=10, price_query = 20):
         super().__init__()
         self.counter = 0
         self.num_file = 0
         #
+        self.priceQuery = price_query
         self.count_queries = int(count_queries)
         self.id_person = id_person
-        self.header_label.setText(f"У вас {self.count_queries} запросов")
+        self.header_label.setText(f'У вас {self.count_queries} <img src={self.coinIcon_path} width="30" height="30" style="vertical-align: top;">')
+        self.browser_button.setText(f"Начать парсинг   ({self.priceQuery})")
         # Create and setup timer
         self.timer = QTimer()
         self.timer.setInterval(1000)
@@ -93,11 +95,11 @@ class NarodWidget(MyWidget):
         self.counter += 1
         self.sec_label.setText(f'Таймер парсинга:{self.counter}')
         if self.counter % 15 == 0:
-            check_query = QuerySetter().check_query(self.count_queries, 50, self.header_label)
+            check_query = QuerySetter().check_query(self.count_queries, self.priceQuery, self.header_label)
             if check_query:
                 self.start_thread()
                 self.count_queries = QuerySetter().set_query(self.count_queries, self.my_base, self.header_label,
-                                                             50, self.ws, self.id_person, self.sh)
+                                                             self.priceQuery, self.ws, self.id_person, self.sh)
             else:
                 self.stop_parsing()
 

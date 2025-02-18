@@ -155,10 +155,10 @@ class WindowSingleQuery(QWidget):
                 item = 'error'
             return item
 
-        name = find_item('class', '_cwjbox')
-        type_item = find_item('class', '_1idnaau')
-        street = find_item('css',
-                           '#root > div > div > div._1sf34doj > div._1u4plm2 > div:nth-child(3) > div:nth-child(2) > div > div > div > div > div._jcreqo > div._fjltwx > div > div._3zzdxk > div > div > div > div > div._1b96w9b > div:nth-child(2) > div._t0tx82 > div._8sgdp4 > div > div:nth-child(1) > div._49kxlr > div > div:nth-child(2) > div:nth-child(1) > span')
+        name = find_item('class', '_1x89xo5')
+        type_item = find_item('class', '_1w9o2igt')
+        street = find_item('class',
+                           '_er2xx9')
         descr = find_item('css', '#root > div > div > div._1sf34doj > div._1u4plm2 > div:nth-child(3) > div:nth-child(2) > div > div > div > div > div._jcreqo > div._fjltwx > div > div._3zzdxk > div > div > div > div > div._1b96w9b > div:nth-child(2) > div._t0tx82 > div._8sgdp4 > div > div:nth-child(1) > div._49kxlr > div > div:nth-child(2) > div:nth-child(1) > div')
         stars = find_item('css',
                           '#root > div > div > div._1sf34doj > div._1u4plm2 > div:nth-child(3) > div:nth-child(2) > div > div > div > div > div._jcreqo > div._fjltwx > div > div._3zzdxk > div > div > div > div > div._1tfwnxl > div._146hbp5 > div > div._y10azs')
@@ -199,7 +199,7 @@ class WindowSingleQuery(QWidget):
 
         check_query = QuerySetter().check_query(self.count_queries, 1, self.header_label)
         if check_query:
-            df.to_csv(self.link_url.text(), sep=';', encoding='utf8', index=False, mode='a', header=head)
+            df.to_csv(self.link_url.text(), sep=';', encoding='cp1251', index=False, mode='a', header=head)
 
             self.count_queries = QuerySetter().set_query(self.count_queries, self.my_base, self.header_label,1, self.ws, self.id_person, self.sh)
 
