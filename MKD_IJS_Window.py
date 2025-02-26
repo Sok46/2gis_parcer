@@ -20,14 +20,15 @@ from query_setter import QuerySetter
 class WindowGisJkh(QWidget):
     def __init__(self,count_queries = 25, id_person = 10):
         super().__init__()
-        self.stage = 0 # включение кнопок по ходу выполнения программы
-        self.checked_cities = None
+
         self.count_queries = int(count_queries)
         self.id_person = id_person
         self.my_base = BasePassParcer()
         self.cities_dict = {}
         self.count_rows = 0
 
+        self.stage = 0  # включение кнопок по ходу выполнения программы
+        self.checked_cities = None
         tkn = "y0_AgAAAAAGvkyVAAyD3AAAAAESV2AkAABx7BX4XRNEv7zh0HWaFEzZX1T2nA"
         self.y = yadisk.YaDisk(token=tkn)
         self.gis_folder = "/ГИС ЖКХ/Сведения_об_объектах_жилищного_фонда_на_15-09-2024" #Путь к папке на Яндексе
@@ -387,9 +388,9 @@ class WindowGisJkh(QWidget):
         self.scroll = QScrollArea()
 
         # self.scroll.setWidget(add_cities_button)
-        self.scroll.setWidgetResizable(True)
-        self.scroll.setBaseSize(50,5)
-        self.scroll.baseSize()
+        # self.scroll.setWidgetResizable(True)
+        # self.scroll.setBaseSize(50,5)
+        # self.scroll.baseSize()
 
 
         self.load_city_layout.addWidget(add_cities_button)

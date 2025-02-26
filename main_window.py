@@ -57,7 +57,7 @@ class MainWindow(QWidget):
     def open_route_parser(self):
         from yandex_route_window import WindowYandexRoute
         self.close()
-        self.w = WindowYandexRoute(self.count_queries, self.id_person)
+        self.w = WindowYandexRoute(self.count_queries, self.id_person, 25)
         self.w.show()
     def open_gis_jkh(self):
         from MKD_IJS_Window import WindowGisJkh
@@ -94,7 +94,7 @@ class MainWindow(QWidget):
         self.dvaGis_frame.setFrameShape(QFrame.Shape.Box)  # Устанавливаем форму рамки
         # dvaGis_frame.setLineWidth(1)  # Устанавливаем ширину линии рамки
         dvaGis_icon = QIcon(
-            fr"C:\Users\Sergey_Biryukov\Desktop\parcers\pythonProject\2gis_parcer\icons\2gis_logo.png")  # Укажите путь к вашему изображению
+            fr"icons\2gis_logo.png")  # Укажите путь к вашему изображению
         # dvaGis_icon.pixmap(32, 32)
         # Создаем QLabel для иконки
         icon_label = QLabel()

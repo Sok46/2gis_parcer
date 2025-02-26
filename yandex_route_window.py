@@ -1,57 +1,39 @@
 import sys
-from PyQt6.QtWidgets import (QApplication, QWidget, QLabel, QPushButton, QLineEdit, QButtonGroup, QVBoxLayout,QHBoxLayout,QSpinBox,QFileDialog)
-from PyQt6.QtGui import QFont, QIcon
+from PyQt6.QtWidgets import (QApplication,  QLabel, QPushButton,QLineEdit)
+import datetime
 from PyQt6.QtCore import Qt
-import time
+import json
+from base_widget import MyWidget
+import filter_log_geochecks
 import pandas as pd
+from query_setter import QuerySetter
+import gspread
+from gspread import Client, Spreadsheet
 from selenium.webdriver import DesiredCapabilities
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
-import gspread
-from gspread import Client, Spreadsheet
-from add_pass_to_base import BasePassParcer
-import json
+import time
 
-from query_setter import QuerySetter
-
-class WindowYandexRoute(QWidget):
-    def __init__(self,count_queries = 25, id_person = 10):
+class WindowYandexRoute(MyWidget):
+    def __init__(self, count_queries=50, id_person=10, price_query = 20):
         super().__init__()
-
-
+        self.counter = 0
+        self.num_file = 0
+        #
+        self.priceQuery = price_query
         self.count_queries = int(count_queries)
         self.id_person = id_person
-        self.my_base = BasePassParcer()
+        self.header_label.setText(f'У вас {self.count_queries} <img src={self.coinIcon_path} width="30" height="30" style="vertical-align: top;">')
+        self.browser_button.setText(f"Начать парсинг   ({self.priceQuery})")
+        # Create and setup timer
 
-        self.initializeUI()
-        self.google_sheet_login()
-
-    def google_sheet_login(self):
-        self.googe_sheet_url = 'https://docs.google.com/spreadsheets/d/1qsd5c5wDWo6YlGu-5SX-Ga8G7E-8XaE20KgMAVDYMD4/edit?gid=0#gid=0'
-        gc: Client = gspread.service_account("./icons/google_service_account.json")
-        self.sh: Spreadsheet = gc.open_by_url(self.googe_sheet_url)
-        self.ws = self.sh.sheet1
-
-    def initializeUI(self):
-        """Set up the application's GUI."""
-        # self.setMaximumSize(310, 130)
-        self.setWindowTitle("Urban parser | Выгрузка маршрутов")
-        self.setUpMainWindow()
-        self.show()
-
-    def save_file(self):
-        f_dialog = QFileDialog().getExistingDirectory()
-        # f_dialog = QFileDialog().getSaveFileName(self, "Save File", "парсинг 2гис", "csv Files (*.csv)")
-        path = f_dialog
-        self.save_path_textedit.setText(path)
-
-    def open_main(self):
-        from main_window import MainWindow
-        self.hide()
-        self.w = MainWindow(self.count_queries)
-        self.w.show()
+        self.yet_another_widgets()
+        self.connects()
+        self.logi = []
+        self.index_features = []
+        self.excel_df = pd.read_excel('./icons/yand_categoty.xlsx')
 
     def parce(self):
         check_query = QuerySetter().check_query(self.count_queries, 30, self.header_label)
@@ -69,7 +51,7 @@ class WindowYandexRoute(QWidget):
             actions = ActionChains(driver)
             time.sleep(3)
             try:
-                input_query = driver.find_element(By.XPATH, '//input[@placeholder="Поиск мест и адресов"]')
+                input_query = driver.find_element(By.XPATH, '//input[@placeholder="Поиск и выбор мест"]')
                 input_query.click()
                 time.sleep(1)
                 input_query.send_keys(Keys.CONTROL + 'a')
@@ -85,16 +67,14 @@ class WindowYandexRoute(QWidget):
                 print("Вылетела капча")
                 return
 
-
             # df = pd.read_excel(r'C:\Users\sergey.biryukov\Downloads\Shlak\центроиды кем.xlsx', sheet_name='фффф')
             iter_routes = self.routes_textedit.text().split(",")
             print(iter_routes)
             for index, row in enumerate(iter_routes):
-                if len(row)<7:
+                if len(row) < 7:
                     row = "Маршрут " + row
                 routes_feats = []
                 index_feats = []
-
 
                 input_query.click()
                 time.sleep(1)
@@ -106,18 +86,10 @@ class WindowYandexRoute(QWidget):
                 time.sleep(1)
                 actions.send_keys(Keys.ENTER).perform()
 
-                # time.sleep(3)
-
-                # actions.send_keys("Минусинск маршрут 11").perform()
-                # actions.send_keys(Keys.ENTER).perform()
                 time.sleep(6)
-                # # driver.refresh()
-                # time.sleep(2)
-                # logs_func(driver,routes_feats,index_feats)
+
                 logs_raw = driver.get_log("performance")
                 logs = [json.loads(lr["message"])["message"] for lr in logs_raw]
-
-                # print(logs, '\n stop logs \n')
 
                 def log_filter(log_):
                     return (
@@ -175,7 +147,7 @@ class WindowYandexRoute(QWidget):
                                 type_route = d['properties']['ThreadMetaData']['type']
                                 types.append(type_route)
                                 names = []
-                                print(number,type_route)
+                                print(number, type_route)
                                 for k, feature in enumerate(d['features']):
                                     # stop_coor = feature["coordinates"]
                                     # print(stop_coor)
@@ -247,93 +219,28 @@ class WindowYandexRoute(QWidget):
                     with open(output_geojson_path + ".geojson", 'w', encoding='utf-8') as output_geojson_file:
                         json.dump(geojson_data, output_geojson_file, indent=2, ensure_ascii=False)
 
-                    with open(output_stops_geojson_path + '_stops' + ".geojson", 'w', encoding='utf-8') as output_geojson_file:
+                    with open(output_stops_geojson_path + '_stops' + ".geojson", 'w',
+                              encoding='utf-8') as output_geojson_file:
                         json.dump(stops_data, output_geojson_file, indent=2, ensure_ascii=False)
-                    # time.sleep(1)
-                    # driver.refresh()
-                    # driver.get_log('browser')
+
                 except:
                     pass
 
-                # self.count_queries -= 30
-                # self.my_base.set_queries(self.ws, int(self.id_person), self.sh, int(self.count_queries))
-                # self.header_label.setText(f"У вас {self.count_queries} запросов")
                 self.count_queries = QuerySetter().set_query(self.count_queries, self.my_base, self.header_label,
                                                              30, self.ws, self.id_person, self.sh)
 
                 print("route save")
 
-
-
-
-    def setUpMainWindow(self):
-        self.header_label = QLabel(f"У вас {self.count_queries} запросов")
-        self.header_label.setFont(QFont("Arial", 18))
-        self.header_label.setAlignment(
-            Qt.AlignmentFlag.AlignCenter)
-        question_label = QLabel("Укажите путь выходного .geojson")
-        question_label.setAlignment(Qt.AlignmentFlag.AlignBottom)
-
-        button_group = QButtonGroup(self)
-        # button_group.buttonClicked.connect(
-        #     self.checkboxClicked)
-
-        self.confirm_button = QPushButton("Завершить программу")
-        self.confirm_button.setEnabled(False)
-        # self.confirm_button.clicked.connect(self.stopDriver)
-        # self.confirm_button.clicked.connect(self.close)
-
-        self.back_button = QPushButton("Назад")
-        self.back_button.setEnabled(True)
-
-
-        self.main_v_box = QVBoxLayout()
-        self.main_v_box.addWidget(self.header_label)
-        self.main_v_box.addWidget(question_label)
-
-        self.main_h_box = QHBoxLayout()
-        self.back_h_box = QHBoxLayout()
-
-        self.save_path_textedit = QLineEdit()
-        # self.link_url.setAlignment(Qt.AlignmentFlag.AlignRight)
-        self.save_path_textedit.setClearButtonEnabled(True)
-        # self.link_url.addAction(QIcon('icons/folder_icon.png'), QLineEdit.ActionPosition.LeadingPosition)
-        seach_action = self.save_path_textedit.addAction(QIcon('icons/folder_icon.png'), QLineEdit.ActionPosition.LeadingPosition)
-
-        self.save_path_textedit.setPlaceholderText('C:/user/your/folder')
-        self.main_v_box.addWidget(self.save_path_textedit)
-
-        cityname_label = QLabel("Название города (и субъект)*")
-        cityname_label.setAlignment(Qt.AlignmentFlag.AlignTop)
-        self.main_v_box.addWidget(cityname_label)
-        self.cityname_textedit = QLineEdit()
-        self.cityname_textedit.setPlaceholderText("Бородино, Красноярский край")
-        self.main_v_box.addWidget(self.cityname_textedit)
-
-
+    def yet_another_widgets(self):
         routes_label = QLabel("Номера маршрутов для скачивания")
         routes_label.setAlignment(Qt.AlignmentFlag.AlignTop)
-        self.main_v_box.addWidget(routes_label)
+        self.main_v_box.insertWidget(5, routes_label)
         self.routes_textedit = QLineEdit()
         self.routes_textedit.setPlaceholderText("Пример: 8,5, троллейбус 2, трам 125")
-        self.main_v_box.addWidget(self.routes_textedit)
+        self.main_v_box.insertWidget(6, self.routes_textedit)
 
-
-
-
-        self.browser_button = QPushButton("Начать парсинг")
-        self.browser_button.setEnabled(True)
-        self.main_v_box.addWidget(self.browser_button)
-        self.main_v_box.addWidget(self.back_button)
-
-
-
-        self.setLayout(self.main_v_box)
-
-        seach_action.triggered.connect(self.save_file)
-        self.back_button.clicked.connect(self.open_main)
+    def connects(self):
         self.browser_button.clicked.connect(self.parce)
-        # self.parce_button.clicked.connect(self.parce)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

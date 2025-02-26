@@ -27,7 +27,7 @@ class GeochecksWidget(MyWidget):
         self.priceQuery = price_query
         self.count_queries = int(count_queries)
         self.id_person = id_person
-        self.header_label.setText(f"У вас {self.count_queries} запросов")
+        self.header_label.setText(f'У вас {self.count_queries} <img src={self.coinIcon_path} width="30" height="30" style="vertical-align: top;">')
         self.browser_button.setText(f"Начать парсинг   ({self.priceQuery})")
         # Create and setup timer
         self.timer = QTimer()
