@@ -34,6 +34,8 @@ class WindowGisJkh(QWidget):
         self.gis_folder = "/ГИС ЖКХ/Сведения_об_объектах_жилищного_фонда_на_15-09-2024" #Путь к папке на Яндексе
         self.base_url = 'https://cloud-api.yandex.net/v1/disk/public/resources/download?'
 
+        self.selected_cities = []
+
         self.initializeUI()
         self.google_sheet_login()
 
@@ -175,8 +177,13 @@ class WindowGisJkh(QWidget):
         else:
             status = False
         # Перебираем все QCheckBox и устанавливаем их состояние в "выбрано"
-        for checkbox in self.findChildren(QCheckBox):
+        i = 0
+        for i, checkbox in enumerate(self.findChildren(QCheckBox)):
             checkbox.setChecked(status)
+        # self.checkBox_counter = i+1
+        # print(self.checkBox_counter)
+        # self.checkBox_counter = len()
+
 
     def set_cities(self): #Вставляет полученные города из get cities в группу
         self.cities_dict = self.thread.cities_dict
@@ -248,12 +255,15 @@ class WindowGisJkh(QWidget):
 
     def on_checkbox_state_changed(self, state):
         # Получаем все тексты активированных чекбоксов
-        selected_cities = []
+        self.selected_cities = []
         for group in self.findChildren(QGroupBox):
             for checkbox in group.findChildren(QCheckBox):
                 if checkbox.isChecked():
-                    selected_cities.append(checkbox.text())
-        self.checked_cities = set(selected_cities)
+                    self.selected_cities.append(checkbox.text())
+        self.checked_cities = set(self.selected_cities)
+
+        # print(len(self.checked_cities))
+        # print(self.checked_cities)
         self.enabled_checkbox()
 
     def save_file(self):
@@ -413,11 +423,6 @@ class WindowGisJkh(QWidget):
 
         self.download_city_butt = QPushButton("Выгрузить названия")
         self.all_checkboxes = QCheckBox("Выбрать все")
-
-
-
-
-
 
 
         self.browser_button = QPushButton("Получить дома")

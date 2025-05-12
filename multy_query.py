@@ -87,10 +87,14 @@ class WindowMultyQuery(QWidget):
         time.sleep(9)
         # scroll_elements = self.driver.find_element(By.CSS_SELECTOR,'#root > div > div > div._1sf34doj > div._1u4plm2 > div:nth-child(2) > div:nth-child(1) > div > div:nth-child(2) > div > div > div > div._1tdquig > div._z72pvu > div._3zzdxk > div > div > div > div._1x4k6z7 > div._5ocwns > div:nth-child(2) > svg > path')
         scroll_elements = self.driver.find_element(By.CSS_SELECTOR,'#root > div > div > div._1sf34doj > div._1u4plm2 > div:nth-child(3) > div:nth-child(1) > div > div:nth-child(2) > div > div > div > div._1tdquig > div._z72pvu > div._3zzdxk > div > div > div > div._1x4k6z7 > div._5ocwns > div._n5hmn94 > svg > path')
+        scroll_elements2 = self.driver.find_element(By.CSS_SELECTOR,'#root > div > div > div._1sf34doj > div._1u4plm2 > div:nth-child(3) > div > div > div:nth-child(2) > div > div > div > div._1tdquig > div._z72pvu > div._3zzdxk > div > div > div > div._1x4k6z7 > div._5ocwns > div:nth-child(2) > svg')
+        # scroll_elements2 = self.driver.find_element(By.CSS_SELECTOR,'#root > div > div > div._1sf34doj > div._1u4plm2 > div:nth-child(3) > div:nth-child(1) > div > div:nth-child(2) > div > div > div > div._1tdquig > div._z72pvu > div._3zzdxk > div > div > div > div._1x4k6z7 > div._5ocwns > div:nth-child(2) > svg > path')
+
+        # scroll_elements = self.driver.find_element(By.CSS_SELECTOR,'#root > div > div > div._1sf34doj > div._1u4plm2 > div:nth-child(3) > div:nth-child(1) > div > div:nth-child(2) > div > div > div > div._1tdquig > div._z72pvu > div._3zzdxk > div > div > div > div._1x4k6z7 > div:nth-child(1) > div')
         scr_el = self.driver.find_element(By.CLASS_NAME, '_1rkbbi0x')
         # scroll_element = scroll_elements[]
-        file_name = ' хозмаги Шарыпово'
-        print(file_name)
+        # file_name = ' хозмаги Шарыпово'
+        # print(file_name)
 
         while i <= count_pages:
             time.sleep(3)
@@ -190,8 +194,28 @@ class WindowMultyQuery(QWidget):
             time.sleep(1)
 
             # actions.click().perform()
+            next_click = False
+            click_counter = 0
             if i < count_pages:
-                scroll_elements.click()
+
+                while not next_click:
+                    print(next_click)
+
+                    try:
+                        print("click")
+                        try:
+                            scroll_elements.click()
+                        except:
+                            self.actions.move_to_element(scroll_elements2).perform()
+                            scroll_elements2.click()
+                        next_click = True
+
+                    except:
+                        click_counter += 1
+                        time.sleep(1)
+                        print(f'click couunter: {click_counter}')
+                        continue
+
 
 
             else:
@@ -204,12 +228,21 @@ class WindowMultyQuery(QWidget):
                                'count_voices': arr_voices, 'lat': arr_lat, 'long': arr_long, 'url': arr_urls})
             print('сформирован DF')
             check_query = QuerySetter().check_query(self.count_queries, j, self.header_label)
+            print('check_query')
             if check_query:
-                df.to_csv(self.save_path_textedit.text(), sep=';',
-                          encoding='cp1251', index=False)
+                try:
+                    df.to_csv(self.save_path_textedit.text(), sep=';',
+                              encoding='utf-8', index=False)
+                    print('данные сохранены')
+                except:
+                    print(f'данные страницы {i} не могут быть сохранены')
+                    df.to_excel(self.save_path_textedit.text(),index=False)
+                    j = 0
+
 
                 self.count_queries = QuerySetter().set_query(self.count_queries, self.my_base, self.header_label, j,
                                                              self.ws, self.id_person, self.sh)
+                print('запросы списаны')
 
 
     def setUpMainWindow(self):

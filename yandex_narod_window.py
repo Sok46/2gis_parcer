@@ -29,6 +29,9 @@ class NarodWidget(MyWidget):
         self.id_person = id_person
         self.header_label.setText(f'У вас {self.count_queries} <img src={self.coinIcon_path} width="30" height="30" style="vertical-align: top;">')
         self.browser_button.setText(f"Начать парсинг   ({self.priceQuery})")
+        self.browser_button.setToolTipDuration(0)  # Устранение задержки
+        self.browser_button.setToolTip("списание производится каждые 15 секунд")  # Добавление всплывающего текста
+
         # Create and setup timer
         self.timer = QTimer()
         self.timer.setInterval(1000)
@@ -73,19 +76,29 @@ class NarodWidget(MyWidget):
         self.driver = webdriver.Chrome(options=options)
         lat, long = self.cityname_textedit.text().strip().split(',')
 
-        url = f'https://n.maps.yandex.ru/#!/?z=16&ll={long}%2C{lat}&l=nk%23sat'
+        url = f'https://n.maps.yandex.ru/#!/?z=17&ll={long}%2C{lat}&l=nk%23sat'
         self.save_path_textedit.setReadOnly(True)
 
         self.driver.get(url)
         # self.parce_button.setEnabled(True)
         self.browser_button.setEnabled(False)
         self.actions = ActionChains(self.driver)
-        sleep(4)
+        sleep(3)
+
         if self.check_auth_file():
+
             print('check_auth_file')
             self.load_cookies(self.driver)
-
-            self.start_timer()
+            currURL = str(self.driver.current_url)
+            sleep(1)
+            print(f'currURL {currURL}')
+            approve_auth = True
+            if 'passport' in currURL:
+                approve_auth = False
+                print('passport')
+                self.auth_yandex()
+            if approve_auth:
+                self.start_timer()
         # if 'где каждый делает карты точнее' in str(self.driver.page_source):
         else:
             self.auth_yandex()
