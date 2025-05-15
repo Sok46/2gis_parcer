@@ -2,7 +2,7 @@ import sys
 from PyQt6.QtWidgets import (QApplication, QWidget, QLabel, QPushButton, QLineEdit, QButtonGroup, QVBoxLayout,QHBoxLayout,QFileDialog,
                              QComboBox,QCheckBox,QGridLayout,QGroupBox,QScrollArea, QProgressBar)
 from PyQt6.QtGui import QFont, QIcon
-from PyQt6.QtCore import Qt, QThread, pyqtSignal, QCoreApplication
+from PyQt6.QtCore import Qt, QThread, pyqtSignal, QCoreApplication, QSize
 import os
 import gspread
 from gspread import Client, Spreadsheet
@@ -20,6 +20,10 @@ from query_setter import QuerySetter
 class WindowGisJkh(QWidget):
     def __init__(self,count_queries = 25, id_person = 10):
         super().__init__()
+
+        self.coinIcon_path = "C:/Users/Sergey_Biryukov/Desktop/parcers/pythonProject/2gis_parcer/icons/coin.png"
+        self.coinIcon = QIcon(self.coinIcon_path)
+
 
         self.count_queries = int(count_queries)
         self.id_person = id_person
@@ -187,25 +191,31 @@ class WindowGisJkh(QWidget):
 
     def set_cities(self): #Вставляет полученные города из get cities в группу
         self.cities_dict = self.thread.cities_dict
+        self.cities_count = self.thread.cities_count
         self.clearLayout(self.load_city_layout)
-        # self.get_cities()
-
-
 
         city_layout = QVBoxLayout()
+        self.download_city_butt = QPushButton("Выгрузить названия")
+        self.download_city_butt.setLayoutDirection(Qt.LayoutDirection.RightToLeft)
+        self.download_city_butt.setStyleSheet("""
+            QPushButton { text-align: right; }
+            QPushButton:pressed { padding-right: 3px; }
+        """)
+        self.update_download_button_text()  # Обновляем текст кнопки
+        self.download_city_butt.clicked.connect(self.download_cities)  # Подключаем сигнал
         city_layout.addWidget(self.download_city_butt)
         city_layout.addWidget(self.all_checkboxes)
 
-        for header in  self.cities_dict.keys():
-            group = QGroupBox(header) #Cоздаём группу чекбоксов
+        for header in self.cities_dict.keys():
+            group = QGroupBox(header)
             myFont = QFont()
             myFont.setBold(True)
             group.setFont(myFont)
             layout = QVBoxLayout()
 
             for city in self.cities_dict[header]:
-
-                checkbox = QCheckBox(city) #Добавляем чекбоксы в группу
+                count = self.cities_count.get(city, 0)
+                checkbox = QCheckBox(f"{city} ({count} помещений)")
                 myFont.setBold(False)
                 checkbox.setFont(myFont)
                 layout.addWidget(checkbox)
@@ -215,33 +225,21 @@ class WindowGisJkh(QWidget):
             city_layout.addWidget(group)
 
         self.city_group.setLayout(city_layout)
-
         self.scroll.setWidget(self.city_group)
-        # self.download_city_butt.clicked.connect(self.download_cities())
-        # self.scroll.setLayout(white_layout)
 
-        # self.main_v_box.addWidget(self.scroll)
-
-            # self.city_combobox.addItems(unique_cities)
     def download_cities(self):
-
-        cities = []
-        print(cities)
-        for header in  self.cities_dict.keys():
+        cities_data = []
+        for header in self.cities_dict.keys():
             for city in self.cities_dict[header]:
-                cities.append(city)
-        check_query = QuerySetter().check_query(self.count_queries, len(cities), self.header_label)
+                count = self.cities_count.get(city, 0)
+                cities_data.append({"город": city, "количество_жил.пом": count})
+                
+        queries_needed = round(len(cities_data)/2)
+        check_query = QuerySetter().check_query(self.count_queries, queries_needed, self.header_label)
         if check_query:
-            df = pd.DataFrame(cities, columns=["города"])
-            df.to_csv(self.save_path_textedit.text() + '/cities.csv', index=False, encoding='cp1251')
-            self.count_queries = QuerySetter().set_query(self.count_queries, self.my_base, self.header_label, len(cities), self.ws, self.id_person, self.sh)
-        # self.count_queries -= len(cities)
-        # print(len(self.cities_dict.keys()))
-        # self.my_base.set_queries(self.ws, int(self.id_person), self.sh, int(self.count_queries))
-        # self.header_label.setText(f"У вас {self.count_queries} запросов")
-
-
-
+            df = pd.DataFrame(cities_data)
+            df.to_csv(self.save_path_textedit.text() + '/cities.csv', index=False, encoding='cp1251', sep=';')
+            self.count_queries = QuerySetter().set_query(self.count_queries, self.my_base, self.header_label, queries_needed, self.ws, self.id_person, self.sh)
 
     def clearLayout(self, layout):
         if layout is not None:
@@ -252,18 +250,88 @@ class WindowGisJkh(QWidget):
                     widget.deleteLater()
                 else:
                     self.clearLayout(item.layout())
+    # Тарифная сетка
+    def calculate_queries_by_tariff(self, rows):
+        tariff_ranges = [
+            (0, 10, 2),
+            (11, 100, 10),
+            (101, 1000, 20),
+            (1001, 5000, 50),
+            (5001, 10000, 100),
+            (10001, 50000, 150),
+            (50001, 100000, 250),
+            (100001, 500000, 350),
+            (500001, 1000000, 500)
+        ]
+        
+        if rows > 1000000:
+            return 2000
+            
+        for min_rows, max_rows, queries in tariff_ranges:
+            if min_rows <= rows <= max_rows:
+                return queries
+                
+        return 0
 
     def on_checkbox_state_changed(self, state):
         # Получаем все тексты активированных чекбоксов
         self.selected_cities = []
+        total_queries = 0
+        
         for group in self.findChildren(QGroupBox):
             for checkbox in group.findChildren(QCheckBox):
-                if checkbox.isChecked():
-                    self.selected_cities.append(checkbox.text())
+                if checkbox.isChecked() and checkbox != self.all_checkboxes:  # Пропускаем чекбокс "выбрать все"
+                    # Извлекаем название города и количество строк
+                    city_text = checkbox.text()
+                    city_name = city_text.split(" (")[0]
+                    rows = int(city_text.split("(")[1].split(" ")[0])
+                    # Считаем запросы для каждого города отдельно
+                    total_queries += self.calculate_queries_by_tariff(rows)
+                    self.selected_cities.append(city_name)
+                    
         self.checked_cities = set(self.selected_cities)
-
-        # print(len(self.checked_cities))
-        # print(self.checked_cities)
+        
+        # Обновляем текст кнопки и её состояние
+        if self.checked_cities:
+            self.browser_button.setText(f"Получить дома ({total_queries})")
+            self.browser_button.setIcon(self.coinIcon)
+            self.browser_button.setIconSize(QSize(15, 15))
+            self.browser_button.setEnabled(True)
+            self.browser_button.setLayoutDirection(Qt.LayoutDirection.RightToLeft)
+            self.browser_button.setStyleSheet("""
+                QPushButton { 
+                    text-align: right; 
+                    padding-right: 5px;
+                    background-color: #4CAF50;
+                    color: white;
+                    border: none;
+                    padding: 10px;
+                    font-size: 16px;
+                    border-radius: 5px;
+                    min-height: 30px;
+                }
+                QPushButton:hover { 
+                    background-color: #45a049;
+                }
+                QPushButton:pressed { 
+                    padding-right: 8px;
+                    background-color: #3d8b40;
+                }
+            """)
+        else:
+            self.browser_button.setText("Получить дома")
+            self.browser_button.setIcon(QIcon())
+            self.browser_button.setEnabled(False)
+            self.browser_button.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
+            self.browser_button.setStyleSheet("""
+                QPushButton { 
+                    text-align: center;
+                    padding: 5px;
+                    font-size: 14px;
+                    min-height: 30px;
+                }
+            """)
+            
         self.enabled_checkbox()
 
     def save_file(self):
@@ -346,11 +414,14 @@ class WindowGisJkh(QWidget):
 
     def setUpMainWindow(self):
         # self.sheets_urls = [] #ссылки на csv Файлы
-        self.header_label = QLabel(f"У вас {self.count_queries} запросов")
+        # self.header_label = QLabel(f"У вас {self.count_queries} запросов")
+        self.header_label = QLabel(
+            f'У вас {self.count_queries} <img src={self.coinIcon_path} width="30" height="30" style="vertical-align: top;">'
+        )
         self.header_label.setFont(QFont("Arial", 18))
         self.header_label.setAlignment(
             Qt.AlignmentFlag.AlignCenter)
-        question_label = QLabel("Выберете действие")
+        question_label = QLabel("Выберете папку для выгрузки:")
         question_label.setAlignment(Qt.AlignmentFlag.AlignTop)
 
         button_group = QButtonGroup(self)
@@ -426,7 +497,13 @@ class WindowGisJkh(QWidget):
 
 
         self.browser_button = QPushButton("Получить дома")
-        self.browser_button.setEnabled(True)
+        self.browser_button.setEnabled(False)
+        self.browser_button.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
+        self.browser_button.setStyleSheet("""
+            QPushButton { 
+                text-align: center;
+            }
+        """)
         self.main_v_box.addWidget(self.browser_button)
         self.main_v_box.addWidget(self.back_button)
 
@@ -489,6 +566,17 @@ class WindowGisJkh(QWidget):
 
         # self.parce_button.clicked.connect(self.parce)
 
+    def update_download_button_text(self):
+        cities = []
+        for header in self.cities_dict.keys():
+            for city in self.cities_dict[header]:
+                cities.append(city)
+        queries_needed = round(len(cities)/2)
+        self.download_city_butt.setText(f"Выгрузить названия ({queries_needed} )")
+        self.download_city_butt.setIcon(self.coinIcon)
+        self.download_city_butt.setIconSize(QSize(15, 15))
+
+
 class ThreadClass(QThread):
     any_signal = pyqtSignal(int)
     query_signal = pyqtSignal(int) # Signal to communicate progress updates
@@ -540,6 +628,7 @@ class ThreadClass(QThread):
                 print(url)
                 # Фильтрация данных по указанному городу, используя метод str.contains
                 filtered_df = df[df['Адрес ОЖФ'].str.contains(city, na=False)]
+                print('отфильтровано')
 
                 # Группировка и агрегация
                 result = filtered_df.groupby('Адрес ОЖФ').agg(
@@ -559,14 +648,17 @@ class ThreadClass(QThread):
                         'first'),
                     method=('Способ управления', 'first')
                 ).reset_index()
-
-                # if len(os.listdir(folder+'\export')) == 0:
+                print(f"gorod {city}")
+                city = city.replace('/','-')
+                print(f"gorod {city}")
                 if f'ГИС_ЖКХ_{city}.csv' not in os.listdir(folder + '\export'):
                     header = True
                 else:
                     header = False
+                print(f"header")
                 result.to_csv(rf'{folder}\export\ГИС_ЖКХ_{city}.csv', sep=';', encoding='cp1251', header=header,
                               mode='a', index=False)
+                print(f"export")
                 row_size = len(result.index)
                 query_size = int( row_size / 400)
                 # print(query_size)
@@ -581,21 +673,14 @@ class ThreadClass(QThread):
         Emits progress updates as the data is processed.
         """
         self.cities_dict = {}
+        self.cities_count = {}  # Словарь для хранения количества упоминаний каждого города
         self.progress = 10  # Initial progress percentage
         self.any_signal.emit(self.progress)
 
-        step_loading = 80 / len(self.sheets_urls)  # Increment progress based on the number of URLs
-        # print('длина',len(self.sheets_urls))
-        # print("step loading", step_loading)
+        step_loading = 80 / len(self.sheets_urls)
 
         for u, url in enumerate(self.sheets_urls):
-            # Update progress after processing each URL
-            # self.progress += step_loading
-            # print(f"Current progress: {self.progress}")
-            # self.any_signal.emit(self.progress)
-
             print(url)
-            # Construct the final URL and fetch the data
             final_url = self.base_url + urlencode(dict(public_key=url))
             response = requests.get(final_url)
             download_url = response.json()['href']
@@ -603,7 +688,7 @@ class ThreadClass(QThread):
             split_values = df['Адрес ОЖФ'].str.split(',', expand=True)
             print(split_values[1].count())
 
-            self.progress +=  1  # Initial progress percentage
+            self.progress +=  1
             self.any_signal.emit(self.progress)
 
             row_delimeter = 1
@@ -612,38 +697,30 @@ class ThreadClass(QThread):
                 while step_row_loading < 1:
                     step_row_loading += step_row_loading
                     print("step_row_loading", step_row_loading)
-
                     row_delimeter += 1
             print("step_row_loading", step_row_loading)
 
-
             self.call_count = 1
             def find_element_after(values):
-                # print(values.tolist())
-
                 if self.call_count % (10000*row_delimeter) == 0:
                     self.progress += int(step_row_loading//1)
                     print(f"Current progress: {self.progress}")
                     self.any_signal.emit(self.progress)
 
-
-
-                self.call_count += 1  # Увеличиваем счетчик каждый раз при вызове функции
-                # print(self.call_count)
-
+                self.call_count += 1
 
                 idx_city = values[values.str.contains(r'\bг\. ', na=False)].index
 
                 if len(idx_city) > 0:
-                    return values[idx_city[0]]  # Return the element containing 'г. '
+                    return values[idx_city[0]]
                 else:
                     idx_rn = values[values.str.contains(r'\bр-н\b', na=False)].index
                     if len(idx_rn) > 0:
-                        idx = idx_rn[0] + 1  # Return the element after 'р-н'
+                        idx = idx_rn[0] + 1
                     else:
                         idx_resp = values[values.str.contains(self.region_combobox.currentText(), na=False)].index
                         if len(idx_resp) > 0:
-                            idx = idx_resp[0] + 1  # Return the element after 'Респ'
+                            idx = idx_resp[0] + 1
                         else:
                             return np.nan
 
@@ -652,23 +729,33 @@ class ThreadClass(QThread):
                 else:
                     return np.nan
 
-            # Apply the function to find unique cities
-            unique_cities = split_values.apply(find_element_after, axis=1).unique()
-            print(unique_cities)
+            # Подсчитываем количество упоминаний каждого города
+            cities_series = split_values.apply(find_element_after, axis=1)
+            city_counts = cities_series.value_counts()
+            
+            # Обновляем общий словарь с количеством упоминаний
+            for city, count in city_counts.items():
+                if city is not np.nan:
+                    if city in self.cities_count:
+                        self.cities_count[city] += count
+                    else:
+                        self.cities_count[city] = count
 
-            # Add the cities to the dictionary
-            for city in unique_cities:
-                type_city = city.split('. ')[0]
-                if type_city in self.cities_dict:
-                    if city not in self.cities_dict[type_city]:
-                        bisect.insort(self.cities_dict[type_city], city)  # Insert city alphabetically
-                else:
-                    self.cities_dict[type_city] = [city]
+            # Обновляем словарь городов с учетом типов
+            for city in city_counts.index:
+                if city is not np.nan:
+                    type_city = city.split('. ')[0]
+                    if type_city in self.cities_dict:
+                        if city not in self.cities_dict[type_city]:
+                            bisect.insort(self.cities_dict[type_city], city)
+                    else:
+                        self.cities_dict[type_city] = [city]
 
             self.progress = int(15 + (step_loading * (u+1)))
             self.any_signal.emit(self.progress)
+
         print(self.cities_dict)
-        return self.cities_dict
+        return self.cities_dict, self.cities_count
 
 
     def run(self):
@@ -676,7 +763,7 @@ class ThreadClass(QThread):
         Main thread execution function. Updates the label and initiates the process of retrieving city data.
         Emits progress updates during execution.
         """
-        self.label.setText("Загрузка...")  # Update UI label text during data fetching
+        # self.label.setText("Загрузка...")  # Update UI label text during data fetching
 
         progress = 10  # Initial progress value
         self.any_signal.emit(progress)
