@@ -2,13 +2,14 @@ import sys
 from PyQt6.QtWidgets import (QApplication, QWidget, QLabel, QPushButton, QLineEdit, QButtonGroup, QVBoxLayout,
                              QCheckBox,QHBoxLayout,QProgressBar)
 from PyQt6.QtGui import QFont
-from PyQt6.QtCore import Qt, QThread, pyqtSignal
+from PyQt6.QtCore import Qt, QThread, pyqtSignal, QTimer
 import datetime
 import gspread
 from gspread import Client, Spreadsheet
 import re
 import json
 import os
+from loading_window import LoadingWindow
 
 
 class WindowAuth(QWidget):
@@ -16,7 +17,7 @@ class WindowAuth(QWidget):
         super().__init__()
         self.login_pass_dir = os.path.dirname(os.path.realpath(__file__))
         self.credentials_path = os.path.join(self.login_pass_dir, "credentials.json")
-
+        self.loading_window = LoadingWindow(self)
         self.initializeUI()
 
     def initializeUI(self):
@@ -177,15 +178,23 @@ class WindowAuth(QWidget):
 
     def openMainWithLogin(self):
         from main_window import MainWindow
-        self.close()
         self.get_all_queries()
-        self.w = MainWindow(self.all_queries, self.id_person)
+        self.loading_window = LoadingWindow()  # Создаем новое окно каждый раз
+        self.loading_window.show()
+        QApplication.processEvents()  # Обрабатываем события, чтобы окно загрузки отобразилось
+        QTimer.singleShot(100, lambda: self._complete_switch(MainWindow, self.all_queries, self.id_person))
+
+    def _complete_switch(self, window_class, *args):
+        self.w = window_class(*args)
         if self.remember_me_checkBox.isChecked():
             print(111)
         else:
             print(self.remember_me_checkBox.isChecked())
         self.save_credentials()
         self.w.show()
+        self.close()
+        if hasattr(self, 'loading_window'):
+            self.loading_window.close()
 
     def start_auth_thread(self):
 
@@ -218,12 +227,11 @@ class WindowAuth(QWidget):
                 os.remove(self.credentials_path)
 
     def openMainEasy(self):
-        # from add_pass_to_base import BasePassParcer
         from main_window import MainWindow
-
-        self.close()
-        self.w = MainWindow()
-        self.w.show()
+        self.loading_window = LoadingWindow()  # Создаем новое окно каждый раз
+        self.loading_window.show()
+        QApplication.processEvents()  # Обрабатываем события, чтобы окно загрузки отобразилось
+        QTimer.singleShot(100, lambda: self._complete_switch(MainWindow))
 
 class ThreadClass(QThread):
     any_signal = pyqtSignal(int)

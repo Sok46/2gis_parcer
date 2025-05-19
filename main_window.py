@@ -1,17 +1,18 @@
 import sys
 from PyQt6.QtWidgets import (QApplication, QWidget, QLabel, QPushButton, QLineEdit, QButtonGroup,QHBoxLayout, QVBoxLayout,QFrame)
 from PyQt6.QtGui import QFont, QIcon
-from PyQt6.QtCore import Qt,QEvent
+from PyQt6.QtCore import Qt,QEvent, QTimer
 from multy_query import WindowMultyQuery
 from Urban_parser import WindowAuth
 from description_main_window import ShapeWindow
+from loading_window import LoadingWindow
 
 class MainWindow(QWidget):
     def __init__(self, count_queries=0, id_person=10):
         super().__init__()
         self.count_queries = count_queries
         self.id_person = id_person
-
+        self.loading_window = LoadingWindow(self)
         self.shape_window = ShapeWindow(self)
 
         # Сопоставление кнопок и описаний
@@ -44,37 +45,42 @@ class MainWindow(QWidget):
         self.shape_window.move(20 + x, y)
         self.shape_window.show()
 
-    def open_multyquery(self):
-        self.hide()
-        self.w = WindowMultyQuery(self.count_queries,self.id_person)
+    def show_loading_and_switch(self, window_class, *args):
+        self.loading_window = LoadingWindow()  # Создаем новое окно каждый раз
+        self.loading_window.show()
+        QApplication.processEvents()  # Обрабатываем события, чтобы окно загрузки отобразилось
+        QTimer.singleShot(100, lambda: self._complete_switch(window_class, *args))
+
+    def _complete_switch(self, window_class, *args):
+        self.w = window_class(*args)
         self.w.show()
+        self.hide()
+        if hasattr(self, 'loading_window'):
+            self.loading_window.close()
+
+    def open_multyquery(self):
+        self.show_loading_and_switch(WindowMultyQuery, self.count_queries, self.id_person)
+
     def open_singlequery(self):
         from single_query import WindowSingleQuery
-        self.close()
-        self.w = WindowSingleQuery(self.count_queries, self.id_person)
-        self.w.show()
+        self.show_loading_and_switch(WindowSingleQuery, self.count_queries, self.id_person)
 
     def open_route_parser(self):
         from yandex_route_window import WindowYandexRoute
-        self.close()
-        self.w = WindowYandexRoute(self.count_queries, self.id_person, 25)
-        self.w.show()
+        self.show_loading_and_switch(WindowYandexRoute, self.count_queries, self.id_person, 25)
+
     def open_gis_jkh(self):
         from MKD_IJS_Window import WindowGisJkh
-        self.close()
-        self.w = WindowGisJkh(self.count_queries, self.id_person)
-        self.w.show()
+        self.show_loading_and_switch(WindowGisJkh, self.count_queries, self.id_person)
+
     def open_narod_yandex(self):
         from yandex_narod_window import NarodWidget
-        self.close()
-        self.w = NarodWidget(self.count_queries, self.id_person,30)
-        self.w.show()
+        self.show_loading_and_switch(NarodWidget, self.count_queries, self.id_person, 30)
 
     def open_geocheki(self):
         from geocheki_window import GeochecksWidget
-        self.close()
-        self.w = GeochecksWidget(self.count_queries, self.id_person, 50)
-        self.w.show()
+        self.show_loading_and_switch(GeochecksWidget, self.count_queries, self.id_person, 50)
+
     def get_all_queries(self):
         self.all_queries = WindowAuth.get_all_queries()
         return self.all_queries

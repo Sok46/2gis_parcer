@@ -1,11 +1,12 @@
 import sys
 from PyQt6.QtWidgets import (QApplication, QWidget, QLabel, QPushButton, QLineEdit, QButtonGroup, QVBoxLayout,QHBoxLayout,QSpinBox,QFileDialog)
 from PyQt6.QtGui import QFont, QIcon
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QTimer
 from add_pass_to_base import BasePassParcer
 from gspread import Client, Spreadsheet
 import gspread
 import time
+from loading_window import LoadingWindow
 
 class MyWidget(QWidget):
     def __init__(self,count_queries = 25, id_person = 10, price_query = 15):
@@ -15,6 +16,7 @@ class MyWidget(QWidget):
         self.count_queries = int(count_queries)
         self.id_person = id_person
         self.my_base = BasePassParcer()
+        self.loading_window = LoadingWindow(self)
 
         self.initializeUI()
         self.google_sheet_login()
@@ -27,9 +29,18 @@ class MyWidget(QWidget):
         self.save_path_textedit.setText(path)
     def open_main(self):
         from main_window import MainWindow
-        self.hide()
-        self.w = MainWindow(self.count_queries,self.id_person)
+        self.loading_window = LoadingWindow()  # Создаем новое окно каждый раз
+        self.loading_window.show()
+        QApplication.processEvents()  # Обрабатываем события, чтобы окно загрузки отобразилось
+        QTimer.singleShot(100, lambda: self._complete_switch(MainWindow, self.count_queries, self.id_person))
+
+    def _complete_switch(self, window_class, *args):
+        self.w = window_class(*args)
         self.w.show()
+        self.hide()
+        if hasattr(self, 'loading_window'):
+            self.loading_window.close()
+
     def google_sheet_login(self):
         self.googe_sheet_url = 'https://docs.google.com/spreadsheets/d/1qsd5c5wDWo6YlGu-5SX-Ga8G7E-8XaE20KgMAVDYMD4/edit?gid=0#gid=0'
         gc: Client = gspread.service_account("./icons/google_service_account.json")

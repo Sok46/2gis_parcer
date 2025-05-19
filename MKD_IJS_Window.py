@@ -2,7 +2,7 @@ import sys
 from PyQt6.QtWidgets import (QApplication, QWidget, QLabel, QPushButton, QLineEdit, QButtonGroup, QVBoxLayout,QHBoxLayout,QFileDialog,
                              QComboBox,QCheckBox,QGridLayout,QGroupBox,QScrollArea, QProgressBar)
 from PyQt6.QtGui import QFont, QIcon
-from PyQt6.QtCore import Qt, QThread, pyqtSignal, QCoreApplication, QSize
+from PyQt6.QtCore import Qt, QThread, pyqtSignal, QCoreApplication, QSize, QTimer
 import os
 import gspread
 from gspread import Client, Spreadsheet
@@ -15,6 +15,7 @@ import numpy as np
 import bisect
 
 from query_setter import QuerySetter
+from loading_window import LoadingWindow
 
 
 class WindowGisJkh(QWidget):
@@ -39,6 +40,8 @@ class WindowGisJkh(QWidget):
         self.base_url = 'https://cloud-api.yandex.net/v1/disk/public/resources/download?'
 
         self.selected_cities = []
+
+        self.loading_window = LoadingWindow(self)
 
         self.initializeUI()
         self.google_sheet_login()
@@ -342,9 +345,17 @@ class WindowGisJkh(QWidget):
 
     def open_main(self):
         from main_window import MainWindow
-        self.hide()
-        self.w = MainWindow(self.count_queries)
+        self.loading_window = LoadingWindow()  # Создаем новое окно каждый раз
+        self.loading_window.show()
+        QApplication.processEvents()  # Обрабатываем события, чтобы окно загрузки отобразилось
+        QTimer.singleShot(100, lambda: self._complete_switch(MainWindow, self.count_queries))
+
+    def _complete_switch(self, window_class, *args):
+        self.w = window_class(*args)
         self.w.show()
+        self.hide()
+        if hasattr(self, 'loading_window'):
+            self.loading_window.close()
 
     def parce(self):
         # print(self.cityname_textedit.text())
