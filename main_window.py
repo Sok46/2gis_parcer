@@ -1,4 +1,5 @@
 import sys
+import os
 from PyQt6.QtWidgets import (QApplication, QWidget, QLabel, QPushButton, QLineEdit, QButtonGroup,QHBoxLayout, QVBoxLayout,QFrame)
 from PyQt6.QtGui import QFont, QIcon
 from PyQt6.QtCore import Qt,QEvent, QTimer
@@ -90,7 +91,10 @@ class MainWindow(QWidget):
         # self.all_queries = self.thread.get_all_queries()
 
     def setUpMainWindow(self):
-        header_label = QLabel(f"У вас {self.count_queries} запросов")
+        self.coinIcon_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "icons", "coin.png")
+        header_label = QLabel(
+            f'У вас {self.count_queries} <img src={self.coinIcon_path} width="30" height="30" style="vertical-align: top;">'
+        )
         header_label.setFont(QFont("Arial", 18))
         header_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         question_label = QLabel("Выберете способ выгрузки")
@@ -124,7 +128,7 @@ class MainWindow(QWidget):
         self.dvaGis_v_box = QVBoxLayout()
         self.dvaGis_h_box = QHBoxLayout()
         self.dvaGis_h_box.addWidget(dvaGis_button)
-        self.dvaGis_h_box.addWidget(dvaGis_label)
+        # self.dvaGis_h_box.addWidget(dvaGis_label)
         self.h_widget.setLayout(self.dvaGis_h_box)
         # self.dvaGis_v_box.addWidget(icon_label)
         # self.dvaGis_v_box.addWidget(dvaGis_label)
@@ -246,7 +250,7 @@ class MainWindow(QWidget):
                             """)
             if i > 2:
                 icon = QIcon(
-                    fr"C:\Users\Sergey_Biryukov\Desktop\parcers\pythonProject\2gis_parcer\icons\main_buttons\{i}.png")  # Укажите путь к вашему изображению
+                    fr".\icons\main_buttons\{i}.png")  # Укажите путь к вашему изображению
                 button.setIcon(icon)
                 self.main_v_box.addWidget(button, alignment=Qt.AlignmentFlag.AlignLeft)
                 # Убираем заливку с помощью стилей

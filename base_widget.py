@@ -7,6 +7,7 @@ from gspread import Client, Spreadsheet
 import gspread
 import time
 from loading_window import LoadingWindow
+import os
 
 class MyWidget(QWidget):
     def __init__(self,count_queries = 25, id_person = 10, price_query = 15):
@@ -43,7 +44,7 @@ class MyWidget(QWidget):
 
     def google_sheet_login(self):
         self.googe_sheet_url = 'https://docs.google.com/spreadsheets/d/1qsd5c5wDWo6YlGu-5SX-Ga8G7E-8XaE20KgMAVDYMD4/edit?gid=0#gid=0'
-        gc: Client = gspread.service_account("./icons/google_service_account.json")
+        gc: Client = gspread.service_account(os.path.join(os.path.dirname(os.path.abspath(__file__)), "icons", "google_service_account.json"))
         self.sh: Spreadsheet = gc.open_by_url(self.googe_sheet_url)
         self.ws = self.sh.sheet1
 
@@ -81,7 +82,7 @@ class MyWidget(QWidget):
             self.cityname_textedit.setEnabled(False)
 
     def setUpMainWindow(self):
-        self.coinIcon_path = "C:/Users/Sergey_Biryukov/Desktop/parcers/pythonProject/2gis_parcer/icons/coin.png"
+        self.coinIcon_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "icons", "coin.png")
         self.coinIcon = QIcon(self.coinIcon_path)
         self.header_label = QLabel(
             f'У вас {self.count_queries} <img src={self.coinIcon_path} width="30" height="30" style="vertical-align: top;">'
@@ -118,7 +119,7 @@ class MyWidget(QWidget):
         # self.link_url.setAlignment(Qt.AlignmentFlag.AlignRight)
         self.save_path_textedit.setClearButtonEnabled(True)
         # self.link_url.addAction(QIcon('icons/folder_icon.png'), QLineEdit.ActionPosition.LeadingPosition)
-        seach_action = self.save_path_textedit.addAction(QIcon('icons/folder_icon.png'), QLineEdit.ActionPosition.LeadingPosition)
+        seach_action = self.save_path_textedit.addAction(QIcon(os.path.join(os.path.dirname(os.path.abspath(__file__)), "icons", "folder_icon.png")), QLineEdit.ActionPosition.LeadingPosition)
 
         self.save_path_textedit.setPlaceholderText('Укажите путь для выходного файла ...')
         self.main_v_box.addWidget(self.save_path_textedit)

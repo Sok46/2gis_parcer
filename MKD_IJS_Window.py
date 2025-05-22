@@ -1,6 +1,7 @@
 import sys
+import logging
 from PyQt6.QtWidgets import (QApplication, QWidget, QLabel, QPushButton, QLineEdit, QButtonGroup, QVBoxLayout,QHBoxLayout,QFileDialog,
-                             QComboBox,QCheckBox,QGridLayout,QGroupBox,QScrollArea, QProgressBar)
+                             QComboBox,QCheckBox,QGridLayout,QGroupBox,QScrollArea, QProgressBar, QMessageBox)
 from PyQt6.QtGui import QFont, QIcon
 from PyQt6.QtCore import Qt, QThread, pyqtSignal, QCoreApplication, QSize, QTimer
 import os
@@ -13,53 +14,136 @@ from urllib.parse import urlencode
 import yadisk
 import numpy as np
 import bisect
+import traceback
 
 from query_setter import QuerySetter
 from loading_window import LoadingWindow
 
+# Настройка логирования
+logging.basicConfig(
+    filename='urban_parser.log',
+    level=logging.DEBUG,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 class WindowGisJkh(QWidget):
     def __init__(self,count_queries = 25, id_person = 10):
-        super().__init__()
+        try:
+            super().__init__()
+            logger.info("Инициализация окна МКД/ИЖС")
 
-        self.coinIcon_path = "C:/Users/Sergey_Biryukov/Desktop/parcers/pythonProject/2gis_parcer/icons/coin.png"
-        self.coinIcon = QIcon(self.coinIcon_path)
+            self.coinIcon_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "icons", "coin.png")
+            if not os.path.exists(self.coinIcon_path):
+                logger.error(f"Файл иконки не найден: {self.coinIcon_path}")
+                raise FileNotFoundError(f"Файл иконки не найден: {self.coinIcon_path}")
+            self.coinIcon = QIcon(self.coinIcon_path)
 
+            self.count_queries = int(count_queries)
+            self.id_person = id_person
+            self.my_base = BasePassParcer()
+            self.cities_dict = {}
+            self.count_rows = 0
 
-        self.count_queries = int(count_queries)
-        self.id_person = id_person
-        self.my_base = BasePassParcer()
-        self.cities_dict = {}
-        self.count_rows = 0
+            self.stage = 0
+            self.checked_cities = None
+            tkn = "y0_AgAAAAAGvkyVAAyD3AAAAAESV2AkAABx7BX4XRNEv7zh0HWaFEzZX1T2nA"
+            try:
+                self.y = yadisk.YaDisk(token=tkn)
+                logger.info("Успешное подключение к Яндекс.Диску")
+            except Exception as e:
+                logger.error(f"Ошибка подключения к Яндекс.Диску: {str(e)}")
+                QMessageBox.critical(self, "Ошибка", "Не удалось подключиться к ГИС ЖКХ. Проверьте подключение к интернету.")
+                raise
 
-        self.stage = 0  # включение кнопок по ходу выполнения программы
-        self.checked_cities = None
-        tkn = "y0_AgAAAAAGvkyVAAyD3AAAAAESV2AkAABx7BX4XRNEv7zh0HWaFEzZX1T2nA"
-        self.y = yadisk.YaDisk(token=tkn)
-        self.gis_folder = "/ГИС ЖКХ/Сведения_об_объектах_жилищного_фонда_на_15-09-2024" #Путь к папке на Яндексе
-        self.base_url = 'https://cloud-api.yandex.net/v1/disk/public/resources/download?'
+            self.gis_folder = "/ГИС ЖКХ/Сведения_об_объектах_жилищного_фонда_на_15-09-2024"
+            self.base_url = 'https://cloud-api.yandex.net/v1/disk/public/resources/download?'
 
-        self.selected_cities = []
+            self.selected_cities = []
+            self.loading_window = LoadingWindow(self)
 
-        self.loading_window = LoadingWindow(self)
+            self.initializeUI()
+            self.google_sheet_login()
+            logger.info("Окно МКД/ИЖС успешно инициализировано")
 
-        self.initializeUI()
-        self.google_sheet_login()
-
-
+        except Exception as e:
+            logger.error(f"Критическая ошибка при инициализации: {str(e)}\n{traceback.format_exc()}")
+            QMessageBox.critical(self, "Критическая ошибка", f"Произошла ошибка при запуске: {str(e)}")
+            raise
 
     def google_sheet_login(self):
-        self.googe_sheet_url = 'https://docs.google.com/spreadsheets/d/1qsd5c5wDWo6YlGu-5SX-Ga8G7E-8XaE20KgMAVDYMD4/edit?gid=0#gid=0'
-        gc: Client = gspread.service_account("./icons/google_service_account.json")
-        self.sh: Spreadsheet = gc.open_by_url(self.googe_sheet_url)
-        self.ws = self.sh.sheet1
+        try:
+            logger.info("Подключение к Google Sheets")
+            self.googe_sheet_url = 'https://docs.google.com/spreadsheets/d/1qsd5c5wDWo6YlGu-5SX-Ga8G7E-8XaE20KgMAVDYMD4/edit?gid=0#gid=0'
+            service_account_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "icons", "google_service_account.json")
+            
+            if not os.path.exists(service_account_path):
+                logger.error(f"Файл учетных данных Google не найден: {service_account_path}")
+                raise FileNotFoundError(f"Файл учетных данных Google не найден: {service_account_path}")
+                
+            gc: Client = gspread.service_account(service_account_path)
+            self.sh: Spreadsheet = gc.open_by_url(self.googe_sheet_url)
+            self.ws = self.sh.sheet1
+            logger.info("Успешное подключение к Google Sheets")
+        except Exception as e:
+            logger.error(f"Ошибка подключения к Google Sheets: {str(e)}\n{traceback.format_exc()}")
+            QMessageBox.critical(self, "Ошибка", "Не удалось подключиться к Google Sheets. Проверьте подключение к интернету и наличие файла учетных данных.")
+            raise
 
     def initializeUI(self):
         """Set up the application's GUI."""
-        # self.setMaximumSize(310, 130)
         self.setWindowTitle("Urban parser | Выгрузка домов")
         self.setUpMainWindow()
         self.show()
+
+    def get_gis_folders(self):
+        """Получает список папок из директории ГИС ЖКХ"""
+        try:
+            folders = []
+            for item in self.y.listdir("/ГИС ЖКХ"):
+                if item['type'] == 'dir':
+                    folder_name = str(item['name']).replace("Сведения_об_объектах_жилищного_фонда_на_","")
+                    folders.append(folder_name)
+            return sorted(folders)
+        except Exception as e:
+            logger.error(f"Ошибка при получении списка папок: {str(e)}")
+            return []
+
+    def on_folder_changed(self, folder_name):
+        """Обработчик изменения выбранной папки"""
+        try:
+            self.gis_folder = f"/ГИС ЖКХ/Сведения_об_объектах_жилищного_фонда_на_{folder_name}"
+            logger.info(f"Выбрана папка: {self.gis_folder}")
+            
+            # Очищаем текущий список регионов
+            self.region_combobox.clear()
+            
+            # Обновляем список регионов
+            self.set_regions()
+            
+            # Очищаем текущий список городов
+            self.cities_dict = {}
+            self.clearLayout(self.load_city_layout)
+            
+            # Восстанавливаем базовую структуру load_city_layout
+            add_cities_button = QPushButton("Подгрузить Населённые пункты")
+            self.load_city_layout.addWidget(add_cities_button)
+            
+            cityname_label = QLabel("Либо введите название населённого пункта самостоятельно")
+            cityname_label.setAlignment(Qt.AlignmentFlag.AlignBottom)
+            self.load_city_layout.addWidget(cityname_label)
+            
+            self.cityname_textedit = QLineEdit()
+            self.cityname_textedit.setPlaceholderText("Например: г. Махачкала")
+            self.load_city_layout.addWidget(self.cityname_textedit)
+            
+            # Подключаем обработчики событий
+            add_cities_button.clicked.connect(self.start_city_thread)
+            self.cityname_textedit.textChanged.connect(self.change_directory)
+            
+        except Exception as e:
+            logger.error(f"Ошибка при смене папки: {str(e)}")
+            QMessageBox.critical(self, "Ошибка", f"Не удалось обновить список регионов: {str(e)}")
 
     def change_directory(self):
         if len(self.save_path_textedit.text()) > 3:
@@ -90,15 +174,22 @@ class WindowGisJkh(QWidget):
         else:
             self.browser_button.setEnabled(False)
 
-    def set_regions(self): #Заполняем комбобокс нашими регионами
-
-        regions = []
-        for item in self.y.listdir(self.gis_folder):
-            file = f"path: {item['path']}"
-            region = file.split('Сведения по ОЖФ ')[1].split(' на ')[0]
-            regions.append(region)
-        self.region_combobox.addItems(sorted(list(set(regions))))
-        print(self.region_combobox.currentText())
+    def set_regions(self):
+        """Заполняем комбобокс регионами"""
+        try:
+            regions = []
+            for item in self.y.listdir(self.gis_folder):
+                file = f"path: {item['path']}"
+                region = file.split('Сведения по ОЖФ ')[1].split(' на ')[0]
+                regions.append(region)
+            
+            # Добавляем уникальные регионы в комбобокс
+            self.region_combobox.addItems(sorted(list(set(regions))))
+            logger.info(f"Список регионов обновлен: {len(regions)} регионов")
+            
+        except Exception as e:
+            logger.error(f"Ошибка при получении списка регионов: {str(e)}")
+            QMessageBox.critical(self, "Ошибка", f"Не удалось получить список регионов: {str(e)}")
 
     def get_selected_regions(self):
         self.sheets_urls = []
@@ -459,17 +550,41 @@ class WindowGisJkh(QWidget):
         # self.link_url.setAlignment(Qt.AlignmentFlag.AlignRight)
         self.save_path_textedit.setClearButtonEnabled(True)
         # self.link_url.addAction(QIcon('icons/folder_icon.png'), QLineEdit.ActionPosition.LeadingPosition)
-        seach_action = self.save_path_textedit.addAction(QIcon('icons/folder_icon.png'), QLineEdit.ActionPosition.LeadingPosition)
+        seach_action = self.save_path_textedit.addAction(QIcon(os.path.join(os.path.dirname(os.path.abspath(__file__)), "icons", "folder_icon.png")), QLineEdit.ActionPosition.LeadingPosition)
 
         self.save_path_textedit.setPlaceholderText('Укажите путь для выходных csv ...')
         self.main_v_box.addWidget(self.save_path_textedit)
 
+        # Создаем два вертикальных layout'а для столбцов
+        columns_layout = QHBoxLayout()
+        
+        # Первый столбец (регионы)
+        region_column = QVBoxLayout()
         region_label = QLabel("Выберете регион")
         region_label.setAlignment(Qt.AlignmentFlag.AlignTop)
-        self.main_v_box.addWidget(region_label)
+        region_column.addWidget(region_label)
+        
         self.region_combobox = QComboBox()
         self.set_regions()
-        self.main_v_box.addWidget(self.region_combobox)
+        region_column.addWidget(self.region_combobox)
+        
+        # Второй столбец (папки)
+        folder_column = QVBoxLayout()
+        folder_label = QLabel("Сведения жилищного фонда на:")
+        folder_label.setAlignment(Qt.AlignmentFlag.AlignTop)
+        folder_column.addWidget(folder_label)
+        
+        self.folder_combobox = QComboBox()
+        self.folder_combobox.addItems(self.get_gis_folders())
+        self.folder_combobox.currentTextChanged.connect(self.on_folder_changed)
+        folder_column.addWidget(self.folder_combobox)
+        
+        # Добавляем столбцы в горизонтальный layout
+        columns_layout.addLayout(region_column)
+        columns_layout.addLayout(folder_column)
+        
+        # Добавляем общий layout в основной
+        self.main_v_box.addLayout(columns_layout)
 
         self.city_group = QGroupBox("Населённые пункты")
         self.load_city_layout = QVBoxLayout()
@@ -575,7 +690,7 @@ class WindowGisJkh(QWidget):
                                                      self.count_rows, self.ws, self.id_person, self.sh)
         print('количество запросов:',self.count_rows)
 
-        # self.parce_button.clicked.connect(self.parce)
+    # self.parce_button.clicked.connect(self.parce)
 
     def update_download_button_text(self):
         cities = []

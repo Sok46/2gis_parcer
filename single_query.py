@@ -3,7 +3,7 @@ import os
 from PyQt6.QtWidgets import (QApplication, QWidget, QLabel, QPushButton, QLineEdit, QButtonGroup, QVBoxLayout,
                               QFileDialog,QHBoxLayout,QGroupBox,QMessageBox)
 from PyQt6.QtGui import QFont, QIcon, QWindow
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QSize
 from selenium.webdriver.chrome.options import Options
 import datetime
 
@@ -275,10 +275,12 @@ class WindowSingleQuery(QWidget):
         self.len_url = 0
         self.filename = datetime.datetime.now()
         """Создайте и расположите виджеты в главном окне."""
-        self.header_label = QLabel(f"У вас {self.count_queries} запросов")
+        self.coinIcon_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "icons", "coin.png")
+        self.header_label = QLabel(
+            f'У вас {self.count_queries} <img src={self.coinIcon_path} width="30" height="30" style="vertical-align: top;">'
+        )
         self.header_label.setFont(QFont("Arial", 18))
-        self.header_label.setAlignment(
-            Qt.AlignmentFlag.AlignCenter)
+        self.header_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         question_label = QLabel("Выберете действие")
         question_label.setAlignment(Qt.AlignmentFlag.AlignBottom)
 
@@ -324,6 +326,32 @@ class WindowSingleQuery(QWidget):
         self.parce_button = QPushButton("Спарсить элемент")
         button_group.addButton(self.parce_button)
         self.parce_button.setEnabled(False)
+        try:
+            self.parce_button.setIcon(QIcon('icons/coin.png'))
+            self.parce_button.setIconSize(QSize(24, 24))
+            self.parce_button.setStyleSheet("""
+                QPushButton:enabled {
+                    background-color: #4CAF50;
+                    color: white;
+                    border: none;
+                    padding: 10px;
+                    font-size: 16px;
+                    border-radius: 5px;
+                    min-height: 30px;
+                }
+                QPushButton:enabled:hover {
+                    background-color: #45a049;
+                }
+                QPushButton:enabled:pressed {
+                    background-color: #3d8b40;
+                }
+                QPushButton:disabled {
+                    background-color: #cccccc;
+                    color: #666666;
+                }
+            """)
+        except Exception as e:
+            print(f"Ошибка при загрузке иконки: {str(e)}")
         self.main_v_box.addWidget(self.parce_button)
 
 
