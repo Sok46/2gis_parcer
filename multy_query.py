@@ -198,7 +198,7 @@ class WindowMultyQuery(QWidget):
                 'stars': [], 'count_voices': [], 'lat': [], 'long': [], 'url': []
             }
 
-            time.sleep(9)
+            time.sleep(2)
             scroll_elements = self.driver.find_element(By.CSS_SELECTOR,'#root > div > div > div._1sf34doj > div._1u4plm2 > div:nth-child(3) > div:nth-child(1) > div > div:nth-child(2) > div > div > div > div._1tdquig > div._z72pvu > div._3zzdxk > div > div > div > div._1x4k6z7 > div._5ocwns > div._n5hmn94 > svg > path')
             scroll_elements2 = self.driver.find_element(By.CSS_SELECTOR,'#root > div > div > div._1sf34doj > div._1u4plm2 > div:nth-child(3) > div > div > div:nth-child(2) > div > div > div > div._1tdquig > div._z72pvu > div._3zzdxk > div > div > div > div._1x4k6z7 > div._5ocwns > div:nth-child(2) > svg')
             scr_el = self.driver.find_element(By.CLASS_NAME, '_1rkbbi0x')

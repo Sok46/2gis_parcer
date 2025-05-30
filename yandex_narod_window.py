@@ -16,7 +16,9 @@ import pandas as pd
 from query_setter import QuerySetter
 import gspread
 from gspread import Client, Spreadsheet
-import fiona
+from io import StringIO
+import datetime
+# import fiona
 
 class NarodWidget(MyWidget):
     def __init__(self, count_queries=50, id_person=10, price_query = 20):
@@ -111,8 +113,10 @@ class NarodWidget(MyWidget):
             check_query = QuerySetter().check_query(self.count_queries, self.priceQuery, self.header_label)
             if check_query:
                 self.start_thread()
+                print(self.priceQuery)
                 self.count_queries = QuerySetter().set_query(self.count_queries, self.my_base, self.header_label,
                                                              self.priceQuery, self.ws, self.id_person, self.sh)
+
             else:
                 self.stop_parsing()
 
@@ -203,12 +207,33 @@ class ThreadClass(QThread):
     def parse(self):
         narod_logs = filter_log.filter_log.logs_func(filter_log, self.driver, self.logi, self.excel_df, self.index_features)
         geojson_str = json.dumps(narod_logs)
-        print('geojson_str')
-        gdf_logs_return = gpd.read_file(geojson_str)
 
-        file_path = rf'{self.filepath}\narod_map.gpkg'
 
-        gdf_logs_return.to_file(file_path,layer=f"Геометрия Яндекса", driver="GPKG")
+        try:
+            # timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+            os.makedirs(self.filepath, exist_ok=True)
+            # file_path = rf'{self.filepath}\narodMap_{timestamp}.geojson'
+            # with open(file_path, "w", encoding="utf-8") as f:
+            #     f.write(geojson_str)
+            # print(f'GeoJSON сохранён: {file_path}')
+            print('geojson_str')
+            gdf = gpd.read_file(StringIO(geojson_str))
+
+            # Путь к GPKG-файлу и имя слоя
+            gpkg_path = rf"{self.filepath}\narod_map.gpkg"
+            layer_name = "Геометрия Яндекса"
+
+            # Проверка существования файла
+            if os.path.exists(gpkg_path):
+                # Добавление слоя в существующий GPKG
+                gdf.to_file(gpkg_path, layer=layer_name, driver="GPKG", mode="a")
+                print(f"Слой '{layer_name}' добавлен в существующий файл {gpkg_path}")
+            else:
+                # Создание нового GPKG
+                gdf.to_file(gpkg_path, layer=layer_name, driver="GPKG")
+                print(f"Создан новый файл GPKG с одним слоем: {layer_name}")
+        except Exception as e:
+            print(f"Ошибка при сохранении GeoJSON: {e}")
 
         self.logi.clear()
         self.index_features.clear()

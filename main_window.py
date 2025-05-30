@@ -76,7 +76,7 @@ class MainWindow(QWidget):
 
     def open_narod_yandex(self):
         from yandex_narod_window import NarodWidget
-        self.show_loading_and_switch(NarodWidget, self.count_queries, self.id_person, 30)
+        self.show_loading_and_switch(NarodWidget, self.count_queries, self.id_person, 50)
 
     def open_geocheki(self):
         from geocheki_window import GeochecksWidget

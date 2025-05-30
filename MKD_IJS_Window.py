@@ -50,9 +50,9 @@ class WindowGisJkh(QWidget):
             tkn = "y0_AgAAAAAGvkyVAAyD3AAAAAESV2AkAABx7BX4XRNEv7zh0HWaFEzZX1T2nA"
             try:
                 self.y = yadisk.YaDisk(token=tkn)
-                logger.info("Успешное подключение к Яндекс.Диску")
+                logger.info("Успешное подключение к Диску")
             except Exception as e:
-                logger.error(f"Ошибка подключения к Яндекс.Диску: {str(e)}")
+                logger.error(f"Ошибка подключения к Диску: {str(e)}")
                 QMessageBox.critical(self, "Ошибка", "Не удалось подключиться к ГИС ЖКХ. Проверьте подключение к интернету.")
                 raise
 
@@ -194,11 +194,12 @@ class WindowGisJkh(QWidget):
     def get_selected_regions(self):
         self.sheets_urls = []
         for item in self.y.listdir(self.gis_folder):
-            # print(f"{item['path']}")
-
-            if self.region_combobox.currentText() in f"{item['path']}":
+            print(repr(self.region_combobox.currentText()))
+            print(repr(item['path']))
+            if self.region_combobox.currentText() in f"{item['path']}".strip():
                 print(f"{item['path']}")
                 sheet_url = item['public_url']
+                print(sheet_url)
                 self.sheets_urls.append(sheet_url)
     def get_cities(self):
         self.get_selected_regions()
@@ -370,7 +371,7 @@ class WindowGisJkh(QWidget):
     def on_checkbox_state_changed(self, state):
         # Получаем все тексты активированных чекбоксов
         self.selected_cities = []
-        total_queries = 0
+        self.total_queries = 0
         
         for group in self.findChildren(QGroupBox):
             for checkbox in group.findChildren(QCheckBox):
@@ -380,14 +381,14 @@ class WindowGisJkh(QWidget):
                     city_name = city_text.split(" (")[0]
                     rows = int(city_text.split("(")[1].split(" ")[0])
                     # Считаем запросы для каждого города отдельно
-                    total_queries += self.calculate_queries_by_tariff(rows)
+                    self.total_queries += self.calculate_queries_by_tariff(rows)
                     self.selected_cities.append(city_name)
                     
         self.checked_cities = set(self.selected_cities)
         
         # Обновляем текст кнопки и её состояние
         if self.checked_cities:
-            self.browser_button.setText(f"Получить дома ({total_queries})")
+            self.browser_button.setText(f"Получить дома ({self.total_queries})")
             self.browser_button.setIcon(self.coinIcon)
             self.browser_button.setIconSize(QSize(15, 15))
             self.browser_button.setEnabled(True)
@@ -670,7 +671,7 @@ class WindowGisJkh(QWidget):
             else:
                 text_cities = None
 
-            self.thread = ThreadClass(self.sheets_urls, self.base_url, self.region_combobox,self.header_label, index=self.indx, folder = self.save_path_textedit.text(),checked_cities=self.checked_cities, text_cities=text_cities)
+            self.thread = ThreadClass(self.sheets_urls, self.base_url, self.region_combobox,self.header_label, index=self.indx, folder = self.save_path_textedit.text(),checked_cities=self.checked_cities, text_cities=text_cities, total_queries=self.total_queries)
             self.thread.any_signal.connect(self.update_progress_bar)
             self.thread.query_signal.connect(self.update_query)
             self.thread.start()
@@ -707,7 +708,7 @@ class ThreadClass(QThread):
     any_signal = pyqtSignal(int)
     query_signal = pyqtSignal(int) # Signal to communicate progress updates
 
-    def __init__(self, urls, base_url, region_combobox, label, parent=None, index=0, folder = None, checked_cities=None, text_cities = None):
+    def __init__(self, urls, base_url, region_combobox, label, parent=None, index=0, folder = None, checked_cities=None, text_cities = None,total_queries = None):
         super(ThreadClass, self).__init__(parent)
         self.index = index
         self.is_running = True
@@ -718,11 +719,13 @@ class ThreadClass(QThread):
         self.folder = folder
         self.checked_cities = checked_cities
         self.text_cities = text_cities
+        self.total_queries = total_queries
 
     def parce(self):
         folder = self.folder
         if not os.path.exists(folder + '\export'):
             os.makedirs(folder + '\export')
+        self.query_signal.emit(self.total_queries)
         for url in self.sheets_urls:
             final_url = self.base_url + urlencode(dict(public_key=url))
             response = requests.get(final_url)
@@ -785,10 +788,11 @@ class ThreadClass(QThread):
                 result.to_csv(rf'{folder}\export\ГИС_ЖКХ_{city}.csv', sep=';', encoding='cp1251', header=header,
                               mode='a', index=False)
                 print(f"export")
-                row_size = len(result.index)
-                query_size = int( row_size / 400)
-                # print(query_size)
-                self.query_signal.emit(query_size)
+                # row_size = len(result.index)
+                # query_size = int( row_size / 400)
+                # print(self.total_queries)
+
+
 
     def return_cities(self):
         return self.cities_dict

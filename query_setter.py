@@ -1,6 +1,6 @@
 
 
-
+import os
 
 class QuerySetter():
     # def __init__(self, count_queries, new_value_query,header_label):
@@ -31,5 +31,7 @@ class QuerySetter():
         # print("new_value_query")
         my_base.set_queries(ws, int(id_person), sh, int(count_queries))
         header_label.setText(f"У вас {count_queries} запросов")
+        coinIcon_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "icons", "coin.png")
+        header_label.setText(f'У вас {count_queries} <img src={coinIcon_path} width="30" height="30" style="vertical-align: top;">')
         # print("new_count_queries", count_queries)
         return count_queries

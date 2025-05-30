@@ -7,14 +7,20 @@ from base_widget import MyWidget
 import filter_log_geochecks
 import pandas as pd
 from query_setter import QuerySetter
-import gspread
-from gspread import Client, Spreadsheet
 from selenium.webdriver import DesiredCapabilities
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 import time
+import os
+import gspread
+from gspread import Client, Spreadsheet
+import traceback
+from PyQt6.QtWidgets import QMessageBox
+import logging
+
+logger = logging.getLogger(__name__)
 
 class WindowYandexRoute(MyWidget):
     def __init__(self, count_queries=50, id_person=10, price_query = 20):
@@ -26,7 +32,7 @@ class WindowYandexRoute(MyWidget):
         self.count_queries = int(count_queries)
         self.id_person = id_person
         self.header_label.setText(f'У вас {self.count_queries} <img src={self.coinIcon_path} width="30" height="30" style="vertical-align: top;">')
-        self.browser_button.setText(f"Начать парсинг   ({self.priceQuery})")
+        self.browser_button.setText(f"Начать парсинг (0 запросов)")
         # Create and setup timer
 
         self.yet_another_widgets()
@@ -34,6 +40,35 @@ class WindowYandexRoute(MyWidget):
         self.logi = []
         self.index_features = []
         self.excel_df = pd.read_excel('./icons/yand_categoty.xlsx')
+        
+        # Инициализация Google Sheets
+        self.google_sheet_login()
+
+    def count_queries_from_routes(self, routes_text: str) -> int:
+        """Подсчет количества запросов на основе количества запятых в номерах маршрутов"""
+        try:
+            # Разбиваем текст на маршруты и фильтруем пустые
+            routes = [route.strip() for route in routes_text.split(',')]
+            # Удаляем пустые маршруты (после запятой)
+            valid_routes = [route for route in routes if route]
+            
+            # Количество запятых = количество валидных маршрутов - 1
+            comma_count = len(valid_routes) - 1 if len(valid_routes) > 0 else 0
+            
+            # Формула: 25 + (количество запятых * 25)
+            return 25 + (comma_count * 25)
+        except Exception as e:
+            print(f"Ошибка при подсчете запросов: {str(e)}")
+            return 0
+
+    def update_parse_button_text(self) -> None:
+        """Обновление текста кнопки парсинга с количеством запросов"""
+        try:
+            routes_text = self.routes_textedit.text()
+            query_count = self.count_queries_from_routes(routes_text)
+            self.browser_button.setText(f"Начать парсинг ({query_count})")
+        except Exception as e:
+            print(f"Ошибка при обновлении текста кнопки: {str(e)}")
 
     def parce(self):
         check_query = QuerySetter().check_query(self.count_queries, 30, self.header_label)
@@ -69,7 +104,7 @@ class WindowYandexRoute(MyWidget):
 
             # df = pd.read_excel(r'C:\Users\sergey.biryukov\Downloads\Shlak\центроиды кем.xlsx', sheet_name='фффф')
             iter_routes = self.routes_textedit.text().split(",")
-            print(iter_routes)
+            # print(iter_routes)
             for index, row in enumerate(iter_routes):
                 if len(row) < 7:
                     row = "Маршрут " + row
@@ -147,7 +182,7 @@ class WindowYandexRoute(MyWidget):
                                 type_route = d['properties']['ThreadMetaData']['type']
                                 types.append(type_route)
                                 names = []
-                                print(number, type_route)
+                                # print(number, type_route)
                                 for k, feature in enumerate(d['features']):
                                     # stop_coor = feature["coordinates"]
                                     # print(stop_coor)
@@ -164,7 +199,7 @@ class WindowYandexRoute(MyWidget):
                                         stop_coor = feature["coordinates"]
                                         stop_coors.append(stop_coor)
                                         stop_names.append(feature["name"])
-                                print(names)
+                                # print(names)
 
                                 for j, coordinates in enumerate(matching_coordinates):
                                     route = {
@@ -213,7 +248,7 @@ class WindowYandexRoute(MyWidget):
                     }
                     # print(types)
                     output_geojson_path = rf'{self.save_path_textedit.text()}\{types[0]}_{numbers[0]}'
-                    print(output_geojson_path)
+                    # print(output_geojson_path)
                     output_stops_geojson_path = rf'{self.save_path_textedit.text()}\{types[0]}_{numbers[0]}'
 
                     with open(output_geojson_path + ".geojson", 'w', encoding='utf-8') as output_geojson_file:
@@ -237,10 +272,30 @@ class WindowYandexRoute(MyWidget):
         self.main_v_box.insertWidget(5, routes_label)
         self.routes_textedit = QLineEdit()
         self.routes_textedit.setPlaceholderText("Пример: 8,5, троллейбус 2, трам 125")
+        self.routes_textedit.textChanged.connect(self.update_parse_button_text)  # Подключаем обработчик изменения текста
         self.main_v_box.insertWidget(6, self.routes_textedit)
 
     def connects(self):
         self.browser_button.clicked.connect(self.parce)
+
+    def google_sheet_login(self):
+        try:
+            logger.info("Подключение к Google Sheets")
+            self.googe_sheet_url = 'https://docs.google.com/spreadsheets/d/1qsd5c5wDWo6YlGu-5SX-Ga8G7E-8XaE20KgMAVDYMD4/edit?gid=0#gid=0'
+            service_account_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "icons", "google_service_account.json")
+            
+            if not os.path.exists(service_account_path):
+                logger.error(f"Файл учетных данных Google не найден: {service_account_path}")
+                raise FileNotFoundError(f"Файл учетных данных Google не найден: {service_account_path}")
+                
+            gc: Client = gspread.service_account(service_account_path)
+            self.sh: Spreadsheet = gc.open_by_url(self.googe_sheet_url)
+            self.ws = self.sh.sheet1
+            logger.info("Успешное подключение к Google Sheets")
+        except Exception as e:
+            logger.error(f"Ошибка подключения к Google Sheets: {str(e)}\n{traceback.format_exc()}")
+            QMessageBox.critical(self, "Ошибка", "Не удалось подключиться к Google Sheets. Проверьте подключение к интернету и наличие файла учетных данных.")
+            raise
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
